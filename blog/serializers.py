@@ -3,7 +3,7 @@ from django.template.defaultfilters import slugify
 
 from rest_framework import serializers
 
-from .models import Author, Category
+from .models import Author, Category, Article
 
 User = get_user_model()
 
@@ -19,12 +19,7 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Author
-        fields = [
-            "id",
-            "phone_number",
-            "avatar",
-            "user",
-        ]
+        fields = ["id", "phone_number", "avatar", "user"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -33,13 +28,45 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = [
-            "id",
-            "title",
-            "heading",
-            "slug",
-            "articles_count",
-        ]
+        fields = ["id", "title", "heading", "slug", "articles_count"]
 
     def get_slug(self, category):
         return slugify(category.title)
+
+
+class SimpleCategorySerializer(serializers.ModelSerializer):
+    slug = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ["title", "slug"]
+
+    def get_slug(self, category):
+        return slugify(category.title)
+
+
+class ArticleSerializer(serializers.ModelSerializer):
+    category = SimpleCategorySerializer(read_only=True)
+    slug = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Article
+        fields = [
+            "id",
+            "category",
+            "heading",
+            "summary",
+            "label",
+            "slug",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_slug(self, article):
+        return slugify(article.heading)
+
+
+class ArticleCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Article
+        fields = ["category", "heading", "summary", "label"]
