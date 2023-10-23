@@ -3,7 +3,10 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 
-api_patterns = []
+api_patterns = [
+    path("auth/", include("users.urls")),
+    path("blog/", include("blog.urls")),
+]
 
 urlpatterns = [
     path("admin/", admin.site.urls),
