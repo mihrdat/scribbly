@@ -21,3 +21,12 @@ class Author(BaseModel):
 class Category(BaseModel):
     title = models.CharField(max_length=255, null=True, blank=True)
     heading = models.CharField(max_length=255, null=True, blank=True)
+
+
+class Article(BaseModel):
+    heading = models.CharField(max_length=255, null=True, blank=True)
+    summary = models.CharField(max_length=255, null=True, blank=True)
+    label = models.CharField(max_length=55, null=True, blank=True)
+    category = models.ForeignKey(
+        Category, on_delete=models.SET_NULL, null=True, related_name="articles"
+    )
