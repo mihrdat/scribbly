@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: ./docker-entrypoint.sh
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15.1-alpine
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_DB = scribbly
+      - POSTGRES_HOST_AUTH_METHOD = trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7.0-alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis-data:/data
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: celery -A config worker --loglevel=info
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: celery -A config beat --loglevel=info
+    depends_on:
+      - redis
+    volumes:
+      - .:/app
+
+  smtp4dev:
+    image: rnwood/smtp4dev:3.2.0-ci20221023104
+    ports:
+      - 25:25
+      - 2525:80
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: ./wait-for-it.sh db:5432 -- ptw
+    depends_on:
+      - db
+      - redis
+    tty: true
+    volumes:
+      - .:/app
+
+  pgadmin:
+    image: dpage/pgadmin4:7.1
+    environment:
+      - PGADMIN_DEFAULT_EMAIL = admin@domain.com
+      - PGADMIN_DEFAULT_PASSWORD = password
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - 5050:80
+    depends_on:
+      - db
+
+volumes:
+  postgres-data:
+  redis-data:
+  pgadmin-data:

@@ -1,0 +1,26 @@
+# Ignore common development files and directories
+.git
+.gitignore
+.idea
+.vscode
+**/__pycache__
+**/README.md
+__pycache__
+README.md
+/venv
+/env
+/.pytest_cache
+
+# Ignore Django-related files and directories
+*.log
+*.db
+*.sqlite3
+/static
+/media
+celerybeat-schedule
+
+# Ignore Docker build files and directories
+.dockerignore
+Dockerfile*
+docker-compose*
+/docker
