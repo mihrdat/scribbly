@@ -3,7 +3,7 @@ from django.template.defaultfilters import slugify
 
 from rest_framework import serializers
 
-from .models import Author, Category, Article
+from .models import Author, Category, Article, ArticleImage
 
 User = get_user_model()
 
@@ -45,9 +45,20 @@ class SimpleCategorySerializer(serializers.ModelSerializer):
         return slugify(category.title)
 
 
+class ArticleImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleImage
+        fields = ["id", "url"]
+
+    def create(self, validated_data):
+        validated_data["article_id"] = self.context["article_id"]
+        return super().create(validated_data)
+
+
 class ArticleSerializer(serializers.ModelSerializer):
     category = SimpleCategorySerializer(read_only=True)
     slug = serializers.SerializerMethodField(read_only=True)
+    images = ArticleImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Article
@@ -60,6 +71,7 @@ class ArticleSerializer(serializers.ModelSerializer):
             "slug",
             "created_at",
             "updated_at",
+            "images",
         ]
 
     def get_slug(self, article):

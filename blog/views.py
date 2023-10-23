@@ -1,7 +1,5 @@
 from django.db.models.aggregates import Count
 
-from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
@@ -9,12 +7,13 @@ from rest_framework.mixins import (
 )
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from .models import Author, Category, Article
+from .models import Author, Category, Article, ArticleImage
 from .serializers import (
     AuthorSerializer,
     CategorySerializer,
     ArticleSerializer,
     ArticleCreateUpdateSerializer,
+    ArticleImageSerializer,
 )
 
 
@@ -31,10 +30,25 @@ class CategoryViewSet(ModelViewSet):
 
 
 class ArticleViewSet(ModelViewSet):
-    queryset = Article.objects.select_related("category").all()
+    queryset = (
+        Article.objects.select_related("category").prefetch_related("images").all()
+    )
     serializer_class = ArticleSerializer
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
             self.serializer_class = ArticleCreateUpdateSerializer
         return super().get_serializer_class()
+
+
+class ArticleImageViewSet(ModelViewSet):
+    queryset = ArticleImage.objects.all()
+    serializer_class = ArticleImageSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["article_id"] = self.kwargs["article_pk"]
+        return context
+
+    def get_queryset(self):
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
