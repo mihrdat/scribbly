@@ -33,7 +33,7 @@ class Article(BaseModel):
 
 
 class ArticleImage(BaseModel):
-    url = models.ImageField(upload_to="blog/articles")
+    image = models.ImageField(upload_to="blog/articles")
     article = models.ForeignKey(
         Article, on_delete=models.CASCADE, related_name="images"
     )
