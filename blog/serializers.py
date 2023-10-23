@@ -48,7 +48,7 @@ class SimpleCategorySerializer(serializers.ModelSerializer):
 class ArticleImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ArticleImage
-        fields = ["id", "url"]
+        fields = ["id", "image"]
 
     def create(self, validated_data):
         validated_data["article_id"] = self.context["article_id"]
