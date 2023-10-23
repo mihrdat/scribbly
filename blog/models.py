@@ -16,3 +16,8 @@ class Author(BaseModel):
     phone_number = models.CharField(max_length=55, null=True, blank=True)
     avatar = models.ImageField(upload_to="blog/avatars", null=True, blank=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+
+class Category(BaseModel):
+    title = models.CharField(max_length=255, null=True, blank=True)
+    heading = models.CharField(max_length=255, null=True, blank=True)
