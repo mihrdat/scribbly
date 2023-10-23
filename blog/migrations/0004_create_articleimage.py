@@ -6,7 +6,7 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("blog", "0003_article"),
+        ("blog", "0003_create_article"),
     ]
 
     operations = [
