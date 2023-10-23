@@ -30,3 +30,10 @@ class Article(BaseModel):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, related_name="articles"
     )
+
+
+class ArticleImage(BaseModel):
+    url = models.ImageField(upload_to="blog/articles")
+    article = models.ForeignKey(
+        Article, on_delete=models.CASCADE, related_name="images"
+    )
