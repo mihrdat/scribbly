@@ -28,7 +28,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "title", "heading", "slug", "articles_count"]
+        fields = ["id", "title", "heading", "slug", "articles_count", "parent"]
 
     def get_slug(self, category):
         return slugify(category.title)
