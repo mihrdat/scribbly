@@ -59,6 +59,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     category = SimpleCategorySerializer(read_only=True)
     slug = serializers.SerializerMethodField(read_only=True)
     images = ArticleImageSerializer(many=True, read_only=True)
+    counts = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Article
@@ -69,13 +70,19 @@ class ArticleSerializer(serializers.ModelSerializer):
             "summary",
             "label",
             "slug",
+            "images",
+            "counts",
             "created_at",
             "updated_at",
-            "images",
         ]
 
     def get_slug(self, article):
         return slugify(article.heading)
+
+    def get_counts(self, article):
+        return {
+            "likes": article.likes_count,
+        }
 
 
 class ArticleCreateUpdateSerializer(serializers.ModelSerializer):
