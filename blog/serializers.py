@@ -3,7 +3,7 @@ from django.template.defaultfilters import slugify
 
 from rest_framework import serializers
 
-from .models import Author, Category, Article, ArticleImage
+from .models import Author, Category, Article, ArticleImage, ArticleLike
 
 User = get_user_model()
 
@@ -82,3 +82,16 @@ class ArticleCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = ["category", "heading", "summary", "label"]
+
+
+class ArticleLikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ArticleLike
+        fields = ["id", "author"]
+        read_only_fields = ["author"]
+
+    def create(self, validated_data):
+        current_user = self.context["request"].user
+        validated_data["article_id"] = self.context["article_id"]
+        validated_data["author"] = current_user.author
+        return super().create(validated_data)
