@@ -35,11 +35,12 @@ class Article(BaseModel):
     )
 
 
-class ArticleImage(BaseModel):
+class ArticleImage(models.Model):
     image = models.ImageField(upload_to="blog/articles")
     article = models.ForeignKey(
         Article, on_delete=models.CASCADE, related_name="images"
     )
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class ArticleLike(models.Model):
