@@ -21,6 +21,9 @@ class Author(BaseModel):
 class Category(BaseModel):
     title = models.CharField(max_length=255, null=True, blank=True)
     heading = models.CharField(max_length=255, null=True, blank=True)
+    parent = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, related_name="childs"
+    )
 
 
 class Article(BaseModel):
