@@ -46,10 +46,10 @@ class ArticleImage(models.Model):
 
 class ArticleLike(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="likes")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="likes")
+    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name="likes")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = [
-            ["article", "user"],
+            ["article", "author"],
         ]
