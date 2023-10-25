@@ -10,6 +10,7 @@ from rest_framework.mixins import (
     DestroyModelMixin,
 )
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.permissions import IsAuthenticated
 
 from .models import Author, Category, Article, ArticleImage, ArticleLike
 from .serializers import (
@@ -20,6 +21,7 @@ from .serializers import (
     ArticleImageSerializer,
     ArticleLikeSerializer,
 )
+from .permissions import IsOwnerOrReadOnly
 
 
 class AuthorViewSet(
@@ -68,6 +70,7 @@ class ArticleLikeViewSet(
 ):
     queryset = ArticleLike.objects.select_related("author").all()
     serializer_class = ArticleLikeSerializer
+    permission_classes = [IsOwnerOrReadOnly]
 
     def get_queryset(self):
         return super().get_queryset().filter(article_id=self.kwargs["article_pk"]).all()
