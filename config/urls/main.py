@@ -3,14 +3,15 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 
-api_patterns = [
+API_PATTERNS = [
     path("auth/", include("users.urls")),
+    path("auth/", include("config.urls.jwt")),
     path("blog/", include("blog.urls")),
 ]
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/v1/", include(api_patterns)),
+    path("api/v1/", include(API_PATTERNS)),
 ]
 
 if settings.DEBUG:
