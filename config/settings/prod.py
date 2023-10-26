@@ -2,7 +2,7 @@ from .common import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [".vercel.app"]
 
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
