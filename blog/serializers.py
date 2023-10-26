@@ -3,7 +3,7 @@ from django.template.defaultfilters import slugify
 
 from rest_framework import serializers
 
-from .models import Author, Category, Article, ArticleImage, ArticleLike
+from .models import Author, Category, Article, ArticleImage, ArticleLike, Comment
 
 User = get_user_model()
 
@@ -82,6 +82,7 @@ class ArticleSerializer(serializers.ModelSerializer):
     def get_counts(self, article):
         return {
             "likes": article.likes_count,
+            "comments": article.comments_count,
         }
 
 
@@ -102,3 +103,31 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         validated_data["article_id"] = self.context["article_id"]
         validated_data["author"] = current_user.author
         return super().create(validated_data)
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    replies = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "description", "author", "replies"]
+
+    def get_replies(self, comment):
+        return CommentSerializer(comment.replies, many=True).data
+
+
+class CommentCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ["description", "article", "reply_to"]
+
+    def create(self, validated_data):
+        current_user = self.context["request"].user
+        validated_data["author"] = current_user.author
+        return super().create(validated_data)
+
+
+class CommentUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ["description"]

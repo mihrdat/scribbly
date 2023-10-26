@@ -31,6 +31,7 @@ class Article(BaseModel):
     summary = models.CharField(max_length=255, null=True, blank=True)
     label = models.CharField(max_length=55, null=True, blank=True)
     likes_count = models.PositiveIntegerField(default=0)
+    comments_count = models.PositiveIntegerField(default=0)
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, related_name="articles"
     )

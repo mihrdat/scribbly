@@ -5,12 +5,14 @@ from .views import (
     ArticleViewSet,
     ArticleImageViewSet,
     ArticleLikeViewSet,
+    CommentViewSet,
 )
 
 router = routers.DefaultRouter()
 router.register("authors", AuthorViewSet)
 router.register("categories", CategoryViewSet)
 router.register("articles", ArticleViewSet)
+router.register("comments", CommentViewSet)
 
 articles_router = routers.NestedDefaultRouter(router, "articles", lookup="article")
 articles_router.register("images", ArticleImageViewSet, basename="article-images")
