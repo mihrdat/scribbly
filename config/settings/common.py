@@ -16,6 +16,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_filters",
+    "drf_spectacular",
     "users",
     "blog",
 ]
@@ -96,6 +97,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 REDIS_URL = os.getenv("REDIS_URL", default="redis://localhost:6379/1")
@@ -111,3 +113,10 @@ CACHES = {
 }
 
 CELERY_BROKER_URL = REDIS_URL
+
+# Swagger
+SPECTACULAR_SETTINGS = {
+    "TITLE": "scribbly API",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
