@@ -11,8 +11,9 @@ from rest_framework.mixins import (
 )
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 
-from .models import Author, Category, Article, ArticleImage, ArticleLike
+from .models import Author, Category, Article, ArticleImage, ArticleLike, Comment
 from .serializers import (
     AuthorSerializer,
     CategorySerializer,
@@ -20,6 +21,9 @@ from .serializers import (
     ArticleCreateUpdateSerializer,
     ArticleImageSerializer,
     ArticleLikeSerializer,
+    CommentSerializer,
+    CommentCreateSerializer,
+    CommentUpdateSerializer,
 )
 from .permissions import IsOwnerOrReadOnly
 
@@ -41,6 +45,13 @@ class ArticleViewSet(ModelViewSet):
         Article.objects.select_related("category").prefetch_related("images").all()
     )
     serializer_class = ArticleSerializer
+
+    @action(detail=True, serializer_class=CommentSerializer)
+    def comments(self, request, *args, **kwargs):
+        self.queryset = Comment.objects.filter(
+            article_id=self.kwargs["pk"], reply_to=None
+        )
+        return self.list(request, *args, **kwargs)
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
@@ -88,8 +99,40 @@ class ArticleLikeViewSet(
         return super().perform_create(serializer)
 
     @transaction.atomic
-    def perform_destroy(self, serializer):
-        article = get_object_or_404(Article, pk=self.kwargs["article_pk"])
+    def perform_destroy(self, instance):
+        article = self.get_object().article
         article.likes_count -= 1
         article.save(update_fields=["likes_count"])
+        return super().perform_destroy(instance)
+
+
+class CommentViewSet(
+    CreateModelMixin,
+    RetrieveModelMixin,
+    DestroyModelMixin,
+    UpdateModelMixin,
+    GenericViewSet,
+):
+    queryset = Comment.objects.select_related("author").all()
+    serializer_class = CommentSerializer
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            self.serializer_class = CommentCreateSerializer
+        if self.action in ["update", "partial_update"]:
+            self.serializer_class = CommentUpdateSerializer
+        return super().get_serializer_class()
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        article = serializer.validated_data["article"]
+        article.comments_count += 1
+        article.save(update_fields=["comments_count"])
         return super().perform_create(serializer)
+
+    @transaction.atomic
+    def perform_destroy(self, instance):
+        article = self.get_object().article
+        article.comments_count -= 1
+        article.save(update_fields=["comments_count"])
+        return super().perform_destroy(instance)
