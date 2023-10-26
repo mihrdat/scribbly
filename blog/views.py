@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.db.models.aggregates import Count
 
@@ -92,7 +93,7 @@ class ArticleLikeViewSet(
 
     @transaction.atomic
     def perform_create(self, serializer):
-        article = self.get_object().article
+        article = get_object_or_404(Article, pk=self.kwargs["article_pk"])
         article.likes_count += 1
         article.save(update_fields=["likes_count"])
         return super().perform_create(serializer)
@@ -124,7 +125,7 @@ class CommentViewSet(
 
     @transaction.atomic
     def perform_create(self, serializer):
-        article = self.get_object().article
+        article = serializer.validated_data["article"]
         article.comments_count += 1
         article.save(update_fields=["comments_count"])
         return super().perform_create(serializer)

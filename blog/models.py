@@ -55,6 +55,10 @@ class ArticleLike(models.Model):
             ["article", "author"],
         ]
 
+    @property
+    def user(self):
+        return self.author.user
+
 
 class Comment(BaseModel):
     description = models.TextField()

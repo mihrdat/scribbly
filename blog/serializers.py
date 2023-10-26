@@ -119,7 +119,7 @@ class CommentSerializer(serializers.ModelSerializer):
 class CommentCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["description", "article", "reply_to"]
+        fields = ["id", "description", "article", "reply_to"]
 
     def create(self, validated_data):
         current_user = self.context["request"].user
