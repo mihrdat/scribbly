@@ -26,6 +26,7 @@ from .serializers import (
     CommentUpdateSerializer,
 )
 from .permissions import IsOwnerOrReadOnly
+from .pagination import DefaultLimitOffsetPagination
 
 
 class AuthorViewSet(
@@ -38,6 +39,7 @@ class AuthorViewSet(
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.annotate(articles_count=Count("articles")).all()
     serializer_class = CategorySerializer
+    pagination_class = DefaultLimitOffsetPagination
 
 
 class ArticleViewSet(ModelViewSet):
@@ -45,6 +47,7 @@ class ArticleViewSet(ModelViewSet):
         Article.objects.select_related("category").prefetch_related("images").all()
     )
     serializer_class = ArticleSerializer
+    pagination_class = DefaultLimitOffsetPagination
 
     @action(detail=True, serializer_class=CommentSerializer)
     def comments(self, request, *args, **kwargs):
@@ -62,6 +65,7 @@ class ArticleViewSet(ModelViewSet):
 class ArticleImageViewSet(ModelViewSet):
     queryset = ArticleImage.objects.all()
     serializer_class = ArticleImageSerializer
+    pagination_class = DefaultLimitOffsetPagination
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -82,6 +86,7 @@ class ArticleLikeViewSet(
     queryset = ArticleLike.objects.select_related("author").all()
     serializer_class = ArticleLikeSerializer
     permission_classes = [IsOwnerOrReadOnly]
+    pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
         return super().get_queryset().filter(article_id=self.kwargs["article_pk"]).all()
@@ -115,6 +120,7 @@ class CommentViewSet(
 ):
     queryset = Comment.objects.select_related("author").all()
     serializer_class = CommentSerializer
+    pagination_class = DefaultLimitOffsetPagination
 
     def get_serializer_class(self):
         if self.action == "create":
