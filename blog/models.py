@@ -71,3 +71,7 @@ class Comment(BaseModel):
     reply_to = models.ForeignKey(
         "self", on_delete=models.CASCADE, related_name="replies", null=True
     )
+
+    @property
+    def user(self):
+        return self.author.user
