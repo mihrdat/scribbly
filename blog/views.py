@@ -1,6 +1,3 @@
-from django.shortcuts import get_object_or_404
-from django.db import transaction
-from django.db.models import Q
 from django.db.models.aggregates import Count
 
 from rest_framework.mixins import (
@@ -115,20 +112,6 @@ class ArticleLikeViewSet(
         context["article_id"] = self.kwargs["article_pk"]
         return context
 
-    @transaction.atomic
-    def perform_create(self, serializer):
-        article = get_object_or_404(Article, pk=self.kwargs["article_pk"])
-        article.likes_count += 1
-        article.save(update_fields=["likes_count"])
-        return super().perform_create(serializer)
-
-    @transaction.atomic
-    def perform_destroy(self, instance):
-        article = self.get_object().article
-        article.likes_count -= 1
-        article.save(update_fields=["likes_count"])
-        return super().perform_destroy(instance)
-
 
 class CommentViewSet(ModelViewSet):
     queryset = Comment.objects.select_related("author").all()
@@ -142,20 +125,6 @@ class CommentViewSet(ModelViewSet):
         if self.action in ["update", "partial_update"]:
             self.serializer_class = CommentUpdateSerializer
         return super().get_serializer_class()
-
-    @transaction.atomic
-    def perform_create(self, serializer):
-        article = serializer.validated_data["article"]
-        article.comments_count += 1
-        article.save(update_fields=["comments_count"])
-        return super().perform_create(serializer)
-
-    @transaction.atomic
-    def perform_destroy(self, instance):
-        article = instance.article
-        article.comments_count -= 1
-        article.save(update_fields=["comments_count"])
-        return super().perform_destroy(instance)
 
 
 class CommentReplyViewSet(ModelViewSet):
@@ -173,8 +142,8 @@ class CommentReplyViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        parent_id = self.kwargs["comment_pk"]
         article = Comment.objects.get(pk=parent_id).article
         context["article"] = article
-        parent_id = self.kwargs["comment_pk"]
         context["parent_id"] = parent_id
         return context

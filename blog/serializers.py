@@ -81,8 +81,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def get_counts(self, article):
         return {
-            "likes": article.likes_count,
-            "comments": article.comments_count,
+            "likes": article.likes.count(),
+            "comments": article.comments.count(),
         }
 
 
