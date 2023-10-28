@@ -69,6 +69,7 @@ class Comment(BaseModel):
     parent = models.ForeignKey(
         "Comment", on_delete=models.CASCADE, related_name="replies", null=True
     )
+    reply_to = models.ForeignKey(Author, on_delete=models.CASCADE, null=True)
 
     @property
     def user(self):

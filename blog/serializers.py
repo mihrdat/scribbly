@@ -116,23 +116,28 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class CommentReplySerializer(serializers.ModelSerializer):
+class CommentReplyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["id", "description"]
+        fields = ["id", "description", "article", "reply_to"]
 
     def create(self, validated_data):
         current_user = self.context["request"].user
         validated_data["author"] = current_user.author
-        validated_data["article"] = self.context["article"]
         validated_data["parent_id"] = self.context["parent_id"]
         return super().create(validated_data)
 
 
 class SimpleCommentSerializer(serializers.ModelSerializer):
+    author = SimpleAuthorSerializer(read_only=True)
+    reply_to = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Comment
-        fields = ["id", "description", "author"]
+        fields = ["id", "description", "author", "reply_to"]
+
+    def get_reply_to(self, comment):
+        return comment.author.user.email
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -141,7 +146,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ["id", "description", "author", "replies_count"]
+        fields = ["id", "description", "author", "replies_count", "parent"]
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):

@@ -23,7 +23,7 @@ from .serializers import (
     CommentCreateSerializer,
     CommentUpdateSerializer,
     SimpleCommentSerializer,
-    CommentReplySerializer,
+    CommentReplyCreateSerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .pagination import DefaultLimitOffsetPagination
@@ -35,12 +35,6 @@ class AuthorViewSet(
     queryset = Author.objects.select_related("user").all()
     serializer_class = AuthorSerializer
     permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        current_user = self.request.user
-        if current_user.is_staff:
-            return super().get_queryset()
-        return super().get_queryset().filter(user=current_user)
 
 
 class CategoryViewSet(ModelViewSet):
@@ -121,18 +115,14 @@ class ArticleLikeViewSet(
 
 
 class CommentViewSet(ModelViewSet):
-    queryset = Comment.objects.select_related("author__user").all()
+    queryset = (
+        Comment.objects.select_related("author__user")
+        .annotate(replies_count=Count("replies"))
+        .all()
+    )
     serializer_class = CommentSerializer
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
-
-    def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(parent=None)
-            .annotate(replies_count=Count("replies"))
-        )
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -143,7 +133,7 @@ class CommentViewSet(ModelViewSet):
 
 
 class CommentReplyViewSet(ModelViewSet):
-    queryset = Comment.objects.select_related("author").all()
+    queryset = Comment.objects.select_related("author__user").all()
     serializer_class = SimpleCommentSerializer
     pagination_class = DefaultLimitOffsetPagination
 
@@ -157,13 +147,11 @@ class CommentReplyViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:
-            self.serializer_class = CommentReplySerializer
+            self.serializer_class = CommentReplyCreateSerializer
         return super().get_serializer_class()
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         parent_id = self.kwargs["comment_pk"]
-        article = Comment.objects.get(pk=parent_id).article
-        context["article"] = article
         context["parent_id"] = parent_id
         return context
