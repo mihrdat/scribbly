@@ -65,7 +65,12 @@ class ArticleViewSet(ModelViewSet):
                 .filter(article_id=self.kwargs["pk"], parent=None)
                 .annotate(replies_count=Count("replies"))
             )
-        return super().get_queryset()
+        return (
+            super()
+            .get_queryset()
+            .annotate(comments_count=Count("comments", distinct=True))
+            .annotate(likes_count=Count("likes", distinct=True))
+        )
 
     def get_serializer_class(self):
         if self.action == "comments":
@@ -85,13 +90,13 @@ class ArticleImageViewSet(ModelViewSet):
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAdminOrReadOnly]
 
+    def get_queryset(self):
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["article_id"] = self.kwargs["article_pk"]
         return context
-
-    def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
 
 class ArticleLikeViewSet(
@@ -107,7 +112,7 @@ class ArticleLikeViewSet(
     pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs["article_pk"]).all()
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
