@@ -60,8 +60,10 @@ class ArticleViewSet(ModelViewSet):
 
     def get_queryset(self):
         if self.action == "comments":
-            return Comment.objects.select_related("author").filter(
-                article_id=self.kwargs["pk"], parent=None
+            return (
+                Comment.objects.select_related("author__user")
+                .filter(article_id=self.kwargs["pk"], parent=None)
+                .annotate(replies_count=Count("replies"))
             )
         return super().get_queryset()
 
@@ -114,10 +116,18 @@ class ArticleLikeViewSet(
 
 
 class CommentViewSet(ModelViewSet):
-    queryset = Comment.objects.select_related("author").all()
+    queryset = Comment.objects.select_related("author__user").all()
     serializer_class = CommentSerializer
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(parent=None)
+            .annotate(replies_count=Count("replies"))
+        )
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -133,7 +143,12 @@ class CommentReplyViewSet(ModelViewSet):
     pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
-        return super().get_queryset().filter(parent=self.kwargs["comment_pk"])
+        return (
+            super()
+            .get_queryset()
+            .filter(parent=self.kwargs["comment_pk"])
+            .order_by("created_at")
+        )
 
     def get_serializer_class(self):
         if self.action in ["create", "update", "partial_update"]:

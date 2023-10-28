@@ -14,6 +14,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "date_joined", "last_login", "is_active"]
 
 
+class SimpleAuthorSerializer(serializers.ModelSerializer):
+    email = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Author
+        fields = ["id", "email", "avatar"]
+
+    def get_email(self, author):
+        return author.user.email
+
+
 class AuthorSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
@@ -125,14 +136,12 @@ class SimpleCommentSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    replies_count = serializers.SerializerMethodField(read_only=True)
+    author = SimpleAuthorSerializer(read_only=True)
+    replies_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Comment
         fields = ["id", "description", "author", "replies_count"]
-
-    def get_replies_count(self, comment):
-        return Comment.objects.filter(parent=comment).count()
 
 
 class CommentCreateSerializer(serializers.ModelSerializer):
