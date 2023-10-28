@@ -6,6 +6,7 @@ from .views import (
     ArticleImageViewSet,
     ArticleLikeViewSet,
     CommentViewSet,
+    CommentReplyViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -18,4 +19,7 @@ articles_router = routers.NestedDefaultRouter(router, "articles", lookup="articl
 articles_router.register("images", ArticleImageViewSet, basename="article-images")
 articles_router.register("likes", ArticleLikeViewSet, basename="article-likes")
 
-urlpatterns = router.urls + articles_router.urls
+comments_router = routers.NestedDefaultRouter(router, "comments", lookup="comment")
+comments_router.register("replies", CommentReplyViewSet, basename="comment-replies")
+
+urlpatterns = router.urls + articles_router.urls + comments_router.urls

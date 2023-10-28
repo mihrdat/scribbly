@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from django.db import transaction
+from django.db.models import Q
 from django.db.models.aggregates import Count
 
 from rest_framework.mixins import (
@@ -24,6 +25,8 @@ from .serializers import (
     CommentSerializer,
     CommentCreateSerializer,
     CommentUpdateSerializer,
+    SimpleCommentSerializer,
+    CommentReplySerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .pagination import DefaultLimitOffsetPagination
@@ -58,11 +61,12 @@ class ArticleViewSet(ModelViewSet):
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAdminOrReadOnly]
 
-    @action(detail=True, permission_classes=[IsAuthenticated])
-    def comments(self, request, *args, **kwargs):
-        article_id = self.kwargs["pk"]
-        self.queryset = Comment.objects.filter(article_id=article_id, reply_to=None)
-        return self.list(request, *args, **kwargs)
+    def get_queryset(self):
+        if self.action == "comments":
+            return Comment.objects.select_related("author").filter(
+                article_id=self.kwargs["pk"], parent=None
+            )
+        return super().get_queryset()
 
     def get_serializer_class(self):
         if self.action == "comments":
@@ -70,6 +74,10 @@ class ArticleViewSet(ModelViewSet):
         if self.action in ["create", "update", "partial_update"]:
             self.serializer_class = ArticleCreateUpdateSerializer
         return super().get_serializer_class()
+
+    @action(detail=True, permission_classes=[IsAuthenticated])
+    def comments(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
 
 class ArticleImageViewSet(ModelViewSet):
@@ -122,13 +130,7 @@ class ArticleLikeViewSet(
         return super().perform_destroy(instance)
 
 
-class CommentViewSet(
-    CreateModelMixin,
-    RetrieveModelMixin,
-    DestroyModelMixin,
-    UpdateModelMixin,
-    GenericViewSet,
-):
+class CommentViewSet(ModelViewSet):
     queryset = Comment.objects.select_related("author").all()
     serializer_class = CommentSerializer
     pagination_class = DefaultLimitOffsetPagination
@@ -150,7 +152,29 @@ class CommentViewSet(
 
     @transaction.atomic
     def perform_destroy(self, instance):
-        article = self.get_object().article
+        article = instance.article
         article.comments_count -= 1
         article.save(update_fields=["comments_count"])
         return super().perform_destroy(instance)
+
+
+class CommentReplyViewSet(ModelViewSet):
+    queryset = Comment.objects.select_related("author").all()
+    serializer_class = SimpleCommentSerializer
+    pagination_class = DefaultLimitOffsetPagination
+
+    def get_queryset(self):
+        return super().get_queryset().filter(parent=self.kwargs["comment_pk"])
+
+    def get_serializer_class(self):
+        if self.action in ["create", "update", "partial_update"]:
+            self.serializer_class = CommentReplySerializer
+        return super().get_serializer_class()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        article = Comment.objects.get(pk=parent_id).article
+        context["article"] = article
+        parent_id = self.kwargs["comment_pk"]
+        context["parent_id"] = parent_id
+        return context

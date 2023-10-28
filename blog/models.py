@@ -22,7 +22,7 @@ class Category(BaseModel):
     title = models.CharField(max_length=255, null=True, blank=True)
     heading = models.CharField(max_length=255, null=True, blank=True)
     parent = models.ForeignKey(
-        "self", on_delete=models.SET_NULL, null=True, related_name="childs"
+        "Category", on_delete=models.SET_NULL, null=True, related_name="childs"
     )
 
 
@@ -68,8 +68,8 @@ class Comment(BaseModel):
     author = models.ForeignKey(
         Author, on_delete=models.CASCADE, related_name="comments"
     )
-    reply_to = models.ForeignKey(
-        "self", on_delete=models.CASCADE, related_name="replies", null=True
+    parent = models.ForeignKey(
+        "Comment", on_delete=models.CASCADE, related_name="replies", null=True
     )
 
     @property
