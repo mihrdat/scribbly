@@ -22,7 +22,7 @@ class Category(BaseModel):
     title = models.CharField(max_length=255, null=True, blank=True)
     heading = models.CharField(max_length=255, null=True, blank=True)
     parent = models.ForeignKey(
-        "self", on_delete=models.SET_NULL, null=True, related_name="childs"
+        "Category", on_delete=models.SET_NULL, null=True, related_name="childs"
     )
 
 
@@ -30,8 +30,6 @@ class Article(BaseModel):
     heading = models.CharField(max_length=255, null=True, blank=True)
     summary = models.CharField(max_length=255, null=True, blank=True)
     label = models.CharField(max_length=55, null=True, blank=True)
-    likes_count = models.PositiveIntegerField(default=0)
-    comments_count = models.PositiveIntegerField(default=0)
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, related_name="articles"
     )
@@ -68,9 +66,10 @@ class Comment(BaseModel):
     author = models.ForeignKey(
         Author, on_delete=models.CASCADE, related_name="comments"
     )
-    reply_to = models.ForeignKey(
-        "self", on_delete=models.CASCADE, related_name="replies", null=True
+    parent = models.ForeignKey(
+        "Comment", on_delete=models.CASCADE, related_name="replies", null=True
     )
+    reply_to = models.ForeignKey(Author, on_delete=models.CASCADE, null=True)
 
     @property
     def user(self):

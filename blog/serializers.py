@@ -14,6 +14,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "date_joined", "last_login", "is_active"]
 
 
+class SimpleAuthorSerializer(serializers.ModelSerializer):
+    email = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Author
+        fields = ["id", "email", "avatar"]
+
+    def get_email(self, author):
+        return author.user.email
+
+
 class AuthorSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
@@ -81,8 +92,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def get_counts(self, article):
         return {
-            "likes": article.likes_count,
-            "comments": article.comments_count,
+            "likes_count": article.likes_count,
+            "comments_count": article.comments_count,
         }
 
 
@@ -99,35 +110,39 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         read_only_fields = ["author"]
 
     def create(self, validated_data):
-        current_user = self.context["request"].user
+        validated_data["author"] = self.context["request"].user.author
         validated_data["article_id"] = self.context["article_id"]
-        validated_data["author"] = current_user.author
         return super().create(validated_data)
+
+
+class CommentReplySerializer(serializers.ModelSerializer):
+    author = SimpleAuthorSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "description", "author", "reply_to"]
+
+    def create(self, validated_data):
+        validated_data["author"] = self.context["request"].user.author
+        validated_data["article_id"] = self.context["article_id"]
+        validated_data["parent_id"] = self.context["parent_id"]
+        return super().create(validated_data)
+
+    def validate_reply_to(self, value):
+        if value is None:
+            raise serializers.ValidationError("This field may not be null.")
+        return value
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    replies = serializers.SerializerMethodField(read_only=True)
+    author = SimpleAuthorSerializer(read_only=True)
+    replies_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ["id", "description", "author", "replies"]
-
-    def get_replies(self, comment):
-        return CommentSerializer(comment.replies, many=True).data
-
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ["id", "description", "article", "reply_to"]
+        fields = ["id", "description", "author", "replies_count"]
 
     def create(self, validated_data):
-        current_user = self.context["request"].user
-        validated_data["author"] = current_user.author
+        validated_data["author"] = self.context["request"].user.author
+        validated_data["article_id"] = self.context["article_id"]
         return super().create(validated_data)
-
-
-class CommentUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ["description"]
