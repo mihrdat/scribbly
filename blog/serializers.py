@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import slugify
 
@@ -15,14 +16,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class SimpleAuthorSerializer(serializers.ModelSerializer):
-    email = serializers.SerializerMethodField(read_only=True)
+    username = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Author
-        fields = ["id", "email", "avatar"]
+        fields = ["id", "username", "avatar"]
 
-    def get_email(self, author):
-        return author.user.email
+    def get_username(self, author):
+        return author.user.username
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -115,12 +116,10 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
-class CommentReplySerializer(serializers.ModelSerializer):
-    author = SimpleAuthorSerializer(read_only=True)
-
+class CommentReplyCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
-        fields = ["id", "description", "author", "reply_to"]
+        fields = ["id", "description", "reply_to"]
 
     def create(self, validated_data):
         validated_data["author"] = self.context["request"].user.author
@@ -132,6 +131,21 @@ class CommentReplySerializer(serializers.ModelSerializer):
         if value is None:
             raise serializers.ValidationError("This field may not be null.")
         return value
+
+
+class CommentReplySerializer(serializers.ModelSerializer):
+    author = SimpleAuthorSerializer(read_only=True)
+    reply_to = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "description", "author", "reply_to"]
+
+    def get_reply_to(self, comment):
+        request = self.context.get("request")
+        return request.build_absolute_uri(
+            reverse("author-detail", args=[comment.author.id])
+        )
 
 
 class CommentSerializer(serializers.ModelSerializer):

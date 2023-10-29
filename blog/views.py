@@ -20,6 +20,7 @@ from .serializers import (
     ArticleImageSerializer,
     ArticleLikeSerializer,
     CommentSerializer,
+    CommentReplyCreateSerializer,
     CommentReplySerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
@@ -121,7 +122,10 @@ class CommentViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == "replies":
-            self.serializer_class = CommentReplySerializer
+            if self.request.method == "POST":
+                self.serializer_class = CommentReplyCreateSerializer
+            elif self.request.method == "GET":
+                self.serializer_class = CommentReplySerializer
         return super().get_serializer_class()
 
     def get_serializer_context(self):
