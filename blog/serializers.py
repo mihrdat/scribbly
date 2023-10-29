@@ -1,3 +1,4 @@
+from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.template.defaultfilters import slugify
 
@@ -12,6 +13,17 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "email", "date_joined", "last_login", "is_active"]
+
+
+class SimpleAuthorSerializer(serializers.ModelSerializer):
+    username = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Author
+        fields = ["id", "username", "avatar"]
+
+    def get_username(self, author):
+        return author.user.username
 
 
 class AuthorSerializer(serializers.ModelSerializer):
@@ -81,8 +93,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def get_counts(self, article):
         return {
-            "likes": article.likes_count,
-            "comments": article.comments_count,
+            "likes_count": article.likes_count,
+            "comments_count": article.comments_count,
         }
 
 
@@ -99,35 +111,52 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         read_only_fields = ["author"]
 
     def create(self, validated_data):
-        current_user = self.context["request"].user
+        validated_data["author"] = self.context["request"].user.author
         validated_data["article_id"] = self.context["article_id"]
-        validated_data["author"] = current_user.author
         return super().create(validated_data)
+
+
+class CommentReplyCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ["id", "description", "reply_to"]
+
+    def create(self, validated_data):
+        validated_data["author"] = self.context["request"].user.author
+        validated_data["article_id"] = self.context["article_id"]
+        validated_data["parent_id"] = self.context["parent_id"]
+        return super().create(validated_data)
+
+    def validate_reply_to(self, value):
+        if value is None:
+            raise serializers.ValidationError("This field may not be null.")
+        return value
+
+
+class CommentReplySerializer(serializers.ModelSerializer):
+    author = SimpleAuthorSerializer(read_only=True)
+    reply_to = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "description", "author", "reply_to"]
+
+    def get_reply_to(self, comment):
+        request = self.context.get("request")
+        return request.build_absolute_uri(
+            reverse("author-detail", args=[comment.author.id])
+        )
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    replies = serializers.SerializerMethodField(read_only=True)
+    author = SimpleAuthorSerializer(read_only=True)
+    replies_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ["id", "description", "author", "replies"]
-
-    def get_replies(self, comment):
-        return CommentSerializer(comment.replies, many=True).data
-
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ["id", "description", "article", "reply_to"]
+        fields = ["id", "description", "author", "replies_count"]
 
     def create(self, validated_data):
-        current_user = self.context["request"].user
-        validated_data["author"] = current_user.author
+        validated_data["author"] = self.context["request"].user.author
+        validated_data["article_id"] = self.context["article_id"]
         return super().create(validated_data)
-
-
-class CommentUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ["description"]

@@ -10,13 +10,13 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "date_joined", "last_login", "is_active"]
+        fields = ["id", "username", "email", "date_joined", "last_login", "is_active"]
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "email", "password"]
+        fields = ["id", "username", "email", "password"]
 
     def validate(self, data):
         user = User(**data)
@@ -43,7 +43,7 @@ class UserCreateOutPutSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "jwt"]
+        fields = ["id", "username", "email", "jwt"]
 
     def get_jwt(self, user):
         refresh = RefreshToken.for_user(user)

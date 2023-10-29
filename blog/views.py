@@ -1,5 +1,3 @@
-from django.shortcuts import get_object_or_404
-from django.db import transaction
 from django.db.models.aggregates import Count
 
 from rest_framework.mixins import (
@@ -22,8 +20,8 @@ from .serializers import (
     ArticleImageSerializer,
     ArticleLikeSerializer,
     CommentSerializer,
-    CommentCreateSerializer,
-    CommentUpdateSerializer,
+    CommentReplyCreateSerializer,
+    CommentReplySerializer,
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .pagination import DefaultLimitOffsetPagination
@@ -35,12 +33,6 @@ class AuthorViewSet(
     queryset = Author.objects.select_related("user").all()
     serializer_class = AuthorSerializer
     permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        current_user = self.request.user
-        if current_user.is_staff:
-            return super().get_queryset()
-        return super().get_queryset().filter(user=current_user)
 
 
 class CategoryViewSet(ModelViewSet):
@@ -58,11 +50,13 @@ class ArticleViewSet(ModelViewSet):
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAdminOrReadOnly]
 
-    @action(detail=True, permission_classes=[IsAuthenticated])
-    def comments(self, request, *args, **kwargs):
-        article_id = self.kwargs["pk"]
-        self.queryset = Comment.objects.filter(article_id=article_id, reply_to=None)
-        return self.list(request, *args, **kwargs)
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .annotate(comments_count=Count("comments", distinct=True))
+            .annotate(likes_count=Count("likes", distinct=True))
+        )
 
     def get_serializer_class(self):
         if self.action == "comments":
@@ -78,13 +72,13 @@ class ArticleImageViewSet(ModelViewSet):
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAdminOrReadOnly]
 
+    def get_queryset(self):
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["article_id"] = self.kwargs["article_pk"]
         return context
-
-    def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
 
 class ArticleLikeViewSet(
@@ -100,57 +94,51 @@ class ArticleLikeViewSet(
     pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs["article_pk"]).all()
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["article_id"] = self.kwargs["article_pk"]
         return context
 
-    @transaction.atomic
-    def perform_create(self, serializer):
-        article = get_object_or_404(Article, pk=self.kwargs["article_pk"])
-        article.likes_count += 1
-        article.save(update_fields=["likes_count"])
-        return super().perform_create(serializer)
 
-    @transaction.atomic
-    def perform_destroy(self, instance):
-        article = self.get_object().article
-        article.likes_count -= 1
-        article.save(update_fields=["likes_count"])
-        return super().perform_destroy(instance)
-
-
-class CommentViewSet(
-    CreateModelMixin,
-    RetrieveModelMixin,
-    DestroyModelMixin,
-    UpdateModelMixin,
-    GenericViewSet,
-):
-    queryset = Comment.objects.select_related("author").all()
+class CommentViewSet(ModelViewSet):
+    queryset = Comment.objects.select_related("author__user").annotate(
+        replies_count=Count("replies")
+    )
     serializer_class = CommentSerializer
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        if self.action == "retrieve":
+            return queryset.filter(article_id=self.kwargs["article_pk"])
+        if self.action == "replies":
+            return queryset.filter(parent=self.kwargs["pk"]).order_by("created_at")
+
+        return queryset.filter(article_id=self.kwargs["article_pk"], parent=None)
+
     def get_serializer_class(self):
-        if self.action == "create":
-            self.serializer_class = CommentCreateSerializer
-        if self.action in ["update", "partial_update"]:
-            self.serializer_class = CommentUpdateSerializer
+        if self.action == "replies":
+            if self.request.method == "POST":
+                self.serializer_class = CommentReplyCreateSerializer
+            elif self.request.method == "GET":
+                self.serializer_class = CommentReplySerializer
         return super().get_serializer_class()
 
-    @transaction.atomic
-    def perform_create(self, serializer):
-        article = serializer.validated_data["article"]
-        article.comments_count += 1
-        article.save(update_fields=["comments_count"])
-        return super().perform_create(serializer)
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["article_id"] = self.kwargs["article_pk"]
 
-    @transaction.atomic
-    def perform_destroy(self, instance):
-        article = self.get_object().article
-        article.comments_count -= 1
-        article.save(update_fields=["comments_count"])
-        return super().perform_destroy(instance)
+        if self.action == "replies":
+            context["parent_id"] = self.kwargs["pk"]
+
+        return context
+
+    @action(methods=["GET", "POST"], detail=True, permission_classes=[IsAuthenticated])
+    def replies(self, request, *args, **kwargs):
+        if request.method == "POST":
+            return self.create(request, *args, **kwargs)
+        return self.list(request, *args, **kwargs)
