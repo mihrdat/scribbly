@@ -110,6 +110,18 @@ class ArticleLikeSerializer(serializers.ModelSerializer):
         fields = ["id", "author"]
         read_only_fields = ["author"]
 
+    def validate(self, data):
+        article_id = self.context["article_id"]
+
+        if ArticleLike.objects.filter(
+            author=self.context["request"].user.author, article_id=article_id
+        ).exists():
+            raise serializers.ValidationError(
+                {"author": "You have already liked this article."}
+            )
+
+        return super().validate(data)
+
     def create(self, validated_data):
         validated_data["author"] = self.context["request"].user.author
         validated_data["article_id"] = self.context["article_id"]
