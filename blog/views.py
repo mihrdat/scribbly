@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from django.db.models.aggregates import Count
 
 from rest_framework.mixins import (
@@ -82,15 +83,11 @@ class ArticleImageViewSet(ModelViewSet):
 
 
 class ArticleLikeViewSet(
-    ListModelMixin,
-    RetrieveModelMixin,
-    CreateModelMixin,
-    DestroyModelMixin,
-    GenericViewSet,
+    ListModelMixin, CreateModelMixin, DestroyModelMixin, GenericViewSet
 ):
     queryset = ArticleLike.objects.select_related("author").all()
     serializer_class = ArticleLikeSerializer
-    permission_classes = [IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [IsAuthenticated]
     pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
@@ -100,6 +97,19 @@ class ArticleLikeViewSet(
         context = super().get_serializer_context()
         context["article_id"] = self.kwargs["article_pk"]
         return context
+
+    def get_object(self):
+        if self.action == "dislike":
+            return get_object_or_404(
+                ArticleLike,
+                article_id=self.kwargs["article_pk"],
+                author=self.request.user.author,
+            )
+        return super().get_object()
+
+    @action(methods=["DELETE"], detail=False)
+    def dislike(self, request, *args, **kwargs):
+        return self.destroy(request, *args, **kwargs)
 
 
 class CommentViewSet(ModelViewSet):
