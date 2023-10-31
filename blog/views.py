@@ -1,16 +1,17 @@
 from django.shortcuts import get_object_or_404
 from django.db.models.aggregates import Count
 
+from rest_framework import status
 from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
     CreateModelMixin,
-    DestroyModelMixin,
 )
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .models import Author, Category, Article, ArticleImage, ArticleLike, Comment
 from .serializers import (
@@ -82,9 +83,7 @@ class ArticleImageViewSet(ModelViewSet):
         return context
 
 
-class ArticleLikeViewSet(
-    ListModelMixin, CreateModelMixin, DestroyModelMixin, GenericViewSet
-):
+class ArticleLikeViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
     queryset = ArticleLike.objects.select_related("author").all()
     serializer_class = ArticleLikeSerializer
     permission_classes = [IsAuthenticated]
@@ -98,18 +97,14 @@ class ArticleLikeViewSet(
         context["article_id"] = self.kwargs["article_pk"]
         return context
 
-    def get_object(self):
-        if self.action == "dislike":
-            return get_object_or_404(
-                ArticleLike,
-                article_id=self.kwargs["article_pk"],
-                author=self.request.user.author,
-            )
-        return super().get_object()
-
     @action(methods=["DELETE"], detail=False)
     def dislike(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+        get_object_or_404(
+            ArticleLike,
+            article_id=self.kwargs.get("article_pk"),
+            author=self.request.user.author,
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CommentViewSet(ModelViewSet):
