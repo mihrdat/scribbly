@@ -74,11 +74,11 @@ class ArticleImageViewSet(ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs.get("article_pk"))
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["article_id"] = self.kwargs.get("article_pk")
+        context["article_id"] = self.kwargs["article_pk"]
         return context
 
 
@@ -91,18 +91,18 @@ class ArticleLikeViewSet(
     pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs.get("article_pk"))
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["article_id"] = self.kwargs.get("article_pk")
+        context["article_id"] = self.kwargs["article_pk"]
         return context
 
     def get_object(self):
         if self.action == "dislike":
             return get_object_or_404(
                 ArticleLike,
-                article_id=self.kwargs.get("article_pk"),
+                article_id=self.kwargs["article_pk"],
                 author=self.request.user.author,
             )
         return super().get_object()
@@ -124,11 +124,11 @@ class CommentViewSet(ModelViewSet):
         queryset = super().get_queryset()
 
         if self.action == "retrieve":
-            return queryset.filter(article_id=self.kwargs.get("article_pk"))
+            return queryset.filter(article_id=self.kwargs["article_pk"])
         if self.action == "replies":
-            return queryset.filter(parent=self.kwargs.get("pk")).order_by("created_at")
+            return queryset.filter(parent=self.kwargs["pk"]).order_by("created_at")
 
-        return queryset.filter(article_id=self.kwargs.get("article_pk"), parent=None)
+        return queryset.filter(article_id=self.kwargs["article_pk"], parent=None)
 
     def get_serializer_class(self):
         if self.action == "replies":
@@ -140,10 +140,10 @@ class CommentViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["article_id"] = self.kwargs.get("article_pk")
+        context["article_id"] = self.kwargs["article_pk"]
 
         if self.action == "replies":
-            context["parent_id"] = self.kwargs.get("pk")
+            context["parent_id"] = self.kwargs["pk"]
 
         return context
 
