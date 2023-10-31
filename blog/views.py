@@ -1,16 +1,17 @@
 from django.shortcuts import get_object_or_404
 from django.db.models.aggregates import Count
 
+from rest_framework import status
 from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
     UpdateModelMixin,
     CreateModelMixin,
-    DestroyModelMixin,
 )
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from .models import Author, Category, Article, ArticleImage, ArticleLike, Comment
 from .serializers import (
@@ -74,42 +75,36 @@ class ArticleImageViewSet(ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs.get("article_pk"))
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["article_id"] = self.kwargs.get("article_pk")
+        context["article_id"] = self.kwargs["article_pk"]
         return context
 
 
-class ArticleLikeViewSet(
-    ListModelMixin, CreateModelMixin, DestroyModelMixin, GenericViewSet
-):
+class ArticleLikeViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
     queryset = ArticleLike.objects.select_related("author").all()
     serializer_class = ArticleLikeSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = DefaultLimitOffsetPagination
 
     def get_queryset(self):
-        return super().get_queryset().filter(article_id=self.kwargs.get("article_pk"))
+        return super().get_queryset().filter(article_id=self.kwargs["article_pk"])
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["article_id"] = self.kwargs.get("article_pk")
+        context["article_id"] = self.kwargs["article_pk"]
         return context
-
-    def get_object(self):
-        if self.action == "dislike":
-            return get_object_or_404(
-                ArticleLike,
-                article_id=self.kwargs.get("article_pk"),
-                author=self.request.user.author,
-            )
-        return super().get_object()
 
     @action(methods=["DELETE"], detail=False)
     def dislike(self, request, *args, **kwargs):
-        return self.destroy(request, *args, **kwargs)
+        get_object_or_404(
+            ArticleLike,
+            article_id=self.kwargs.get("article_pk"),
+            author=self.request.user.author,
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CommentViewSet(ModelViewSet):
@@ -124,11 +119,11 @@ class CommentViewSet(ModelViewSet):
         queryset = super().get_queryset()
 
         if self.action == "retrieve":
-            return queryset.filter(article_id=self.kwargs.get("article_pk"))
+            return queryset.filter(article_id=self.kwargs["article_pk"])
         if self.action == "replies":
-            return queryset.filter(parent=self.kwargs.get("pk")).order_by("created_at")
+            return queryset.filter(parent=self.kwargs["pk"]).order_by("created_at")
 
-        return queryset.filter(article_id=self.kwargs.get("article_pk"), parent=None)
+        return queryset.filter(article_id=self.kwargs["article_pk"], parent=None)
 
     def get_serializer_class(self):
         if self.action == "replies":
@@ -140,10 +135,10 @@ class CommentViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context["article_id"] = self.kwargs.get("article_pk")
+        context["article_id"] = self.kwargs["article_pk"]
 
         if self.action == "replies":
-            context["parent_id"] = self.kwargs.get("pk")
+            context["parent_id"] = self.kwargs["pk"]
 
         return context
 
