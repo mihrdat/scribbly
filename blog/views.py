@@ -36,6 +36,19 @@ class AuthorViewSet(
     serializer_class = AuthorSerializer
     permission_classes = [IsAuthenticated]
 
+    @action(methods=["GET", "PUT", "PATCH"], detail=False)
+    def me(self, request, *args, **kwargs):
+        self.get_object = self.get_current_author
+        if request.method == "PUT":
+            return self.update(request, *args, **kwargs)
+        elif request.method == "PATCH":
+            return self.partial_update(request, *args, **kwargs)
+
+        return self.retrieve(request, *args, **kwargs)
+
+    def get_current_author(self):
+        return self.request.user.author
+
 
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.annotate(articles_count=Count("articles")).all()
