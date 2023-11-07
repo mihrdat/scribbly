@@ -108,8 +108,10 @@ class ArticleLikeViewSet(ListModelMixin, CreateModelMixin, GenericViewSet):
 
 
 class CommentViewSet(ModelViewSet):
-    queryset = Comment.objects.select_related("author__user").annotate(
-        replies_count=Count("replies")
+    queryset = (
+        Comment.objects.select_related("author__user")
+        .select_related("reply_to__user")
+        .annotate(replies_count=Count("replies"))
     )
     serializer_class = CommentSerializer
     pagination_class = DefaultLimitOffsetPagination
