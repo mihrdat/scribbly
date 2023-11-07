@@ -142,7 +142,7 @@ class CommentViewSet(ModelViewSet):
 
         return context
 
-    @action(methods=["GET", "POST"], detail=True, permission_classes=[IsAuthenticated])
+    @action(methods=["GET", "POST"], detail=True)
     def replies(self, request, *args, **kwargs):
         if request.method == "POST":
             return self.create(request, *args, **kwargs)
