@@ -93,8 +93,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     def get_counts(self, article):
         return {
-            "likes_count": article.likes_count,
-            "comments_count": article.comments_count,
+            "likes": article.likes_count,
+            "comments": article.comments_count,
         }
 
 
@@ -155,20 +155,28 @@ class CommentReplySerializer(serializers.ModelSerializer):
 
     def get_reply_to(self, comment):
         request = self.context.get("request")
-        return request.build_absolute_uri(
-            reverse("author-detail", args=[comment.author.id])
-        )
+        return {
+            "username": comment.reply_to.user.username,
+            "url": request.build_absolute_uri(
+                reverse("author-detail", args=[comment.reply_to.id])
+            ),
+        }
 
 
 class CommentSerializer(serializers.ModelSerializer):
     author = SimpleAuthorSerializer(read_only=True)
-    replies_count = serializers.IntegerField(read_only=True)
+    counts = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ["id", "description", "author", "replies_count"]
+        fields = ["id", "description", "author", "counts"]
 
     def create(self, validated_data):
         validated_data["author"] = self.context["request"].user.author
         validated_data["article_id"] = self.context["article_id"]
         return super().create(validated_data)
+
+    def get_counts(self, comments):
+        return {
+            "replies": comments.replies_count,
+        }
