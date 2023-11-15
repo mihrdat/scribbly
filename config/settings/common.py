@@ -3,7 +3,7 @@ import dj_database_url
 from pathlib import Path
 
 from config.minio import *
-from config.auth.google import *
+from config.Oauth.google import *
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -59,7 +59,7 @@ WSGI_APPLICATION = "config.wsgi.app"
 DATABASES = {
     "default": dj_database_url.config(
         env="DATABASE_URL",
-        default="postgres://postgres:password@localhost:5432/scribbly",
+        default="postgres://postgres:password@127.0.0.1:5432/scribbly",
     )
 }
 
@@ -104,7 +104,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-REDIS_URL = os.getenv("REDIS_URL", default="redis://localhost:6379/1")
+REDIS_URL = os.getenv("REDIS_URL", default="redis://127.0.0.1:6379/1")
 
 CACHES = {
     "default": {
