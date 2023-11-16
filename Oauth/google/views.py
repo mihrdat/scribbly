@@ -47,12 +47,10 @@ class GoogleLoginApi(APIView):
         try:
             user = User.objects.get(email=user_info["email"])
         except User.DoesNotExist:
-            user = (
-                User.objects.create_user(
-                    email=user_info["email"],
-                    username=user_info["name"],
-                    password=make_password(None),
-                ),
+            user = User.objects.create_user(
+                email=user_info["email"],
+                username=user_info["name"],
+                password=make_password(None),
             )
 
         user.last_login = timezone.now()
