@@ -44,16 +44,13 @@ class GoogleLoginApi(APIView):
         google_tokens = service.get_google_tokens(code=code)
         user_info = service.get_user_info(google_tokens=google_tokens)
 
-        try:
-            user = User.objects.get(email=user_info["email"])
-        except User.DoesNotExist:
-            user = User.objects.create_user(
-                email=user_info["email"],
-                password=make_password(None),
-            )
+        (user, created) = User.objects.get_or_create(email=user_info["email"])
 
         user.last_login = timezone.now()
         user.save(update_fields=["last_login"])
 
         serializer = UserSerializer(user)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
