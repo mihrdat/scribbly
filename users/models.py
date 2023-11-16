@@ -33,6 +33,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
+    password = models.CharField(max_length=128, default=make_password(None))
     username = models.CharField(
         max_length=55,
         unique=True,

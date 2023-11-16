@@ -49,7 +49,6 @@ class GoogleLoginApi(APIView):
         except User.DoesNotExist:
             user = User.objects.create_user(
                 email=user_info["email"],
-                username=user_info["name"],
                 password=make_password(None),
             )
 
