@@ -5,9 +5,14 @@ from pathlib import Path
 from config.minio import *
 from config.Oauth.google import *
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-SECRET_KEY = os.getenv("SECRET_KEY", default="insecure-secret-key-!x*@z#3^$")
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -57,10 +62,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.app"
 
 DATABASES = {
-    "default": dj_database_url.config(
-        env="DATABASE_URL",
-        default="postgres://postgres:password@127.0.0.1:5432/scribbly",
-    )
+    "default": dj_database_url.config(env="DATABASE_URL"),
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -104,7 +106,7 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
-REDIS_URL = os.getenv("REDIS_URL", default="redis://127.0.0.1:6379/1")
+REDIS_URL = os.environ.get("REDIS_URL")
 
 CACHES = {
     "default": {
@@ -116,7 +118,7 @@ CACHES = {
     }
 }
 
-CELERY_BROKER_URL = REDIS_URL
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
 
 # Swagger
 SPECTACULAR_SETTINGS = {
@@ -128,3 +130,5 @@ SPECTACULAR_SETTINGS = {
 SIMPLE_JWT = {
     "UPDATE_LAST_LOGIN": True,
 }
+
+BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL")
