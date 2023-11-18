@@ -10,6 +10,7 @@ from .serializers import (
     UserSerializer,
     UserCreateSerializer,
     UserCreateOutPutSerializer,
+    ChangePasswordSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
 
@@ -29,8 +30,19 @@ class UserViewSet(ModelViewSet):
             return self.update(request, *args, **kwargs)
         elif request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
-            
+
         return self.retrieve(request, *args, **kwargs)
+
+    @action(methods=["POST"], detail=False)
+    def change_password(self, request, *args, **kwargs):
+        current_user = self.get_current_user()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        current_user.set_password(serializer.data["new_password"])
+        current_user.save(update_fields=["password"])
+
+        return Response(status=status.HTTP_200_OK)
 
     def get_current_user(self):
         return self.request.user
@@ -49,6 +61,8 @@ class UserViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             self.serializer_class = UserCreateSerializer
+        if self.action == "change_password":
+            self.serializer_class = ChangePasswordSerializer
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):

@@ -14,15 +14,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=128, required=True)
+    password = serializers.CharField(max_length=128)
 
     class Meta:
         model = User
         fields = ["id", "username", "email", "password"]
 
-    def validate(self, data):
-        user = User(**data)
-        password = data["password"]
+    def validate(self, attrs):
+        user = User(**attrs)
+        password = attrs["password"]
 
         try:
             validate_password(password, user)
@@ -34,7 +34,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
                 }
             )
 
-        return data
+        return attrs
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
@@ -50,3 +50,24 @@ class UserCreateOutPutSerializer(serializers.ModelSerializer):
     def get_jwt(self, user):
         refresh = RefreshToken.for_user(user)
         return {"refresh": str(refresh), "access": str(refresh.access_token)}
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(max_length=128)
+    new_password = serializers.CharField(max_length=128)
+
+    def validate_current_password(self, value):
+        is_password_valid = self.context["request"].user.check_password(value)
+        if not is_password_valid:
+            raise serializers.ValidationError("Invalid password.")
+        return value
+
+    def validate_new_password(self, value):
+        user = self.context["request"].user
+        try:
+            validate_password(value, user)
+        except exceptions.ValidationError as e:
+            serializer_error = serializers.as_serializer_error(e)
+            raise serializers.ValidationError(serializer_error["non_field_errors"])
+
+        return value
