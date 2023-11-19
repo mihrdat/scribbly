@@ -39,14 +39,18 @@ class UserViewSet(ModelViewSet):
 
     @action(methods=["POST"], detail=False)
     def change_password(self, request, *args, **kwargs):
-        current_user = self.get_current_user()
+        user = self.get_current_user()
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        current_user.set_password(serializer.data["new_password"])
-        current_user.save(update_fields=["password"])
+        user.set_password(serializer.data["new_password"])
+        user.save(update_fields=["password"])
 
-        return Response(status=status.HTTP_200_OK)
+        Token.objects.get(user=user).delete()
+
+        new_token = Token.objects.create(user=user)
+        serializer = TokenSerializer(new_token)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_current_user(self):
         return self.request.user

@@ -74,9 +74,11 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class TokenSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(source="key")
+
     class Meta:
         model = Token
-        fields = ["user", "key"]
+        fields = ["token"]
 
 
 class TokenCreateSerializer(serializers.Serializer):
