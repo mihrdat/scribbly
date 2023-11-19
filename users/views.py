@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.contrib.auth import get_user_model
 
 from rest_framework import status
@@ -5,14 +6,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
-from rest_framework.generics import GenericAPIView
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
     UserCreateOutPutSerializer,
     ChangePasswordSerializer,
     TokenSerializer,
-    TokenCreateSerializer,
 )
 from rest_framework.authtoken.models import Token
 
@@ -37,6 +36,7 @@ class UserViewSet(ModelViewSet):
 
         return self.retrieve(request, *args, **kwargs)
 
+    @transaction.atomic
     @action(methods=["POST"], detail=False)
     def change_password(self, request, *args, **kwargs):
         user = self.get_current_user()
@@ -46,6 +46,7 @@ class UserViewSet(ModelViewSet):
         user.set_password(serializer.data["new_password"])
         user.save(update_fields=["password"])
 
+        # Log out user from other systems after changing the password
         Token.objects.get(user=user).delete()
 
         new_token = Token.objects.create(user=user)
@@ -85,28 +86,3 @@ class UserViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         return serializer.save()
-
-
-class TokenCreateView(GenericAPIView):
-    serializer_class = TokenCreateSerializer
-
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        (token, created) = Token.objects.get_or_create(user=serializer.user)
-
-        serializer = TokenSerializer(token)
-
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
-
-
-class TokenDestroyView(GenericAPIView):
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request):
-        Token.objects.get(user=request.user).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)

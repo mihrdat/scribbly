@@ -1,20 +1,20 @@
 from django.contrib.auth import get_user_model
+
 from rest_framework import serializers
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.authtoken.models import Token
 
 User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
-    jwt = serializers.SerializerMethodField()
+    token = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "jwt"]
+        fields = ["id", "username", "email", "token"]
 
-    def get_jwt(self, user):
-        refresh = RefreshToken.for_user(user)
-        return {"refresh": str(refresh), "access": str(refresh.access_token)}
+    def get_token(self, user):
+        return Token.objects.create(user=user).key
 
 
 class GoogleAuthSerializer(serializers.Serializer):
