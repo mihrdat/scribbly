@@ -1,7 +1,6 @@
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
-from django.contrib.auth.hashers import make_password
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -50,6 +49,7 @@ class GoogleLoginApi(APIView):
         user.save(update_fields=["last_login"])
 
         serializer = UserSerializer(user)
+
         return Response(
             serializer.data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
