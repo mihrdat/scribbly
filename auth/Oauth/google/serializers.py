@@ -14,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "token"]
 
     def get_token(self, user):
-        return Token.objects.create(user=user).key
+        return Token.objects.get_or_create(user=user).key
 
 
 class GoogleAuthSerializer(serializers.Serializer):
