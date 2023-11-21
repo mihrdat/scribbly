@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.contrib.auth import get_user_model
 
 from rest_framework import status
@@ -5,12 +6,15 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
-
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
     UserCreateOutPutSerializer,
+    ChangePasswordSerializer,
+    TokenSerializer,
 )
+from rest_framework.authtoken.models import Token
+
 from .pagination import DefaultLimitOffsetPagination
 
 User = get_user_model()
@@ -29,8 +33,25 @@ class UserViewSet(ModelViewSet):
             return self.update(request, *args, **kwargs)
         elif request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
-            
+
         return self.retrieve(request, *args, **kwargs)
+
+    @transaction.atomic
+    @action(methods=["POST"], detail=False)
+    def change_password(self, request, *args, **kwargs):
+        user = self.get_current_user()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user.set_password(serializer.data["new_password"])
+        user.save(update_fields=["password"])
+
+        # Log out user from other systems after changing the password
+        Token.objects.get(user=user).delete()
+
+        new_token = Token.objects.create(user=user)
+        serializer = TokenSerializer(new_token)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_current_user(self):
         return self.request.user
@@ -49,6 +70,8 @@ class UserViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             self.serializer_class = UserCreateSerializer
+        if self.action == "change_password":
+            self.serializer_class = ChangePasswordSerializer
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):

@@ -1,5 +1,5 @@
 from rest_framework import routers
-from users import views
+from . import views
 
 router = routers.DefaultRouter()
 
