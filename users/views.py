@@ -31,9 +31,8 @@ class UserViewSet(ModelViewSet):
         self.get_object = self.get_current_user
         if request.method == "PUT":
             return self.update(request, *args, **kwargs)
-        elif request.method == "PATCH":
+        if request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
-
         return self.retrieve(request, *args, **kwargs)
 
     @transaction.atomic
