@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib.auth import get_user_model
@@ -23,6 +24,7 @@ class GoogleLoginRedirectApi(APIView):
 
 
 class GoogleLoginApi(APIView):
+    @transaction.atomic
     def get(self, request, *args, **kwargs):
         serializer = GoogleAuthSerializer(data=request.GET)
         serializer.is_valid(raise_exception=True)
@@ -43,14 +45,14 @@ class GoogleLoginApi(APIView):
         google_tokens = service.get_google_tokens(code=code)
         user_info = service.get_user_info(google_tokens=google_tokens)
 
-        (user, created) = User.objects.get_or_create(email=user_info["email"])
+        email = user_info["email"]
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = User.objects.create_user(email=email, is_active=True)
 
         user.last_login = timezone.now()
         user.save(update_fields=["last_login"])
 
         serializer = UserSerializer(user)
-
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
-        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
