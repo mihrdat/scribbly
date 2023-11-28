@@ -14,7 +14,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "token"]
 
     def get_token(self, user):
-        return Token.objects.get_or_create(user=user).key
+        (token, created) = Token.objects.get_or_create(user=user)
+        return token.key
 
 
 class GoogleAuthSerializer(serializers.Serializer):
@@ -26,5 +27,4 @@ class GoogleAuthSerializer(serializers.Serializer):
         error = attrs.get("error")
         if error is not None:
             raise serializers.ValidationError({"error": error})
-
         return super().validate(attrs)
