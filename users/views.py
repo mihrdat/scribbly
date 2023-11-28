@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.decorators import action
+from rest_framework.authtoken.models import Token
+
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
@@ -13,8 +15,6 @@ from .serializers import (
     ChangePasswordSerializer,
     TokenSerializer,
 )
-from rest_framework.authtoken.models import Token
-
 from .pagination import DefaultLimitOffsetPagination
 
 User = get_user_model()
@@ -31,9 +31,8 @@ class UserViewSet(ModelViewSet):
         self.get_object = self.get_current_user
         if request.method == "PUT":
             return self.update(request, *args, **kwargs)
-        elif request.method == "PATCH":
+        if request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
-
         return self.retrieve(request, *args, **kwargs)
 
     @transaction.atomic
