@@ -1,4 +1,3 @@
-from datetime import timedelta
 from .common import *
 from config.email.dev import *
 
@@ -16,12 +15,6 @@ MIDDLEWARE += [
 # To fix django-debug-toolbar disappearing when running application using Docker.
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
-}
-
-SIMPLE_JWT = {
-    **SIMPLE_JWT,
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=14),
 }
 
 MINIO_STORAGE_USE_HTTPS = False
