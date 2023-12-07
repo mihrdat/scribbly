@@ -52,6 +52,12 @@ class UserCreateOutPutSerializer(serializers.ModelSerializer):
         return Token.objects.create(user=user).key
 
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["username", "email"]
+
+
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(max_length=128)
     new_password = serializers.CharField(max_length=128)

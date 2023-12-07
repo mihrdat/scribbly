@@ -12,6 +12,7 @@ from .serializers import (
     UserSerializer,
     UserCreateSerializer,
     UserCreateOutPutSerializer,
+    UserUpdateSerializer,
     ChangePasswordSerializer,
     TokenSerializer,
 )
@@ -71,6 +72,8 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = UserCreateSerializer
         if self.action == "change_password":
             self.serializer_class = ChangePasswordSerializer
+        if self.action in ["update", "partial_update"]:
+            self.serializer_class = UserUpdateSerializer
         return super().get_serializer_class()
 
     def create(self, request, *args, **kwargs):
