@@ -11,7 +11,6 @@ from rest_framework.authtoken.models import Token
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
-    UserCreateOutPutSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer,
     TokenSerializer,
@@ -75,16 +74,3 @@ class UserViewSet(ModelViewSet):
         if self.action in ["update", "partial_update"]:
             self.serializer_class = UserUpdateSerializer
         return super().get_serializer_class()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = self.perform_create(serializer)
-        headers = super().get_success_headers(serializer.data)
-        serializer = UserCreateOutPutSerializer(user)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
-
-    def perform_create(self, serializer):
-        return serializer.save()
