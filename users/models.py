@@ -1,10 +1,9 @@
-import uuid
-
 from django.db import models
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
+from .utils import generate_random_username
 
 
 class UserManager(BaseUserManager):
@@ -37,7 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=55,
         unique=True,
         validators=[UnicodeUsernameValidator()],
-        default=uuid.uuid4,
+        default=generate_random_username,
     )
     email = models.EmailField(unique=True)
     is_staff = models.BooleanField(default=False)
