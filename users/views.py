@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -13,9 +14,11 @@ from .serializers import (
     UserCreateSerializer,
     UserUpdateSerializer,
     ChangePasswordSerializer,
+    ResetPasswordSerializer,
     TokenSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
+from .utils import encode_uid
 
 User = get_user_model()
 
@@ -45,12 +48,22 @@ class UserViewSet(ModelViewSet):
         user.set_password(serializer.data["new_password"])
         user.save(update_fields=["password"])
 
-        # Log out user from other systems after changing the password
+        # Log out user from other systems
         Token.objects.get(user=user).delete()
 
         new_token = Token.objects.create(user=user)
         serializer = TokenSerializer(new_token)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=False, permission_classes=[AllowAny])
+    def reset_password(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.get(email=serializer.validated_data["email"])
+        uid = encode_uid(user.pk)
+        token = default_token_generator.make_token(user)
+        return Response("OK")
 
     def get_current_user(self):
         return self.request.user
@@ -69,8 +82,10 @@ class UserViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.action == "create":
             self.serializer_class = UserCreateSerializer
-        if self.action == "change_password":
-            self.serializer_class = ChangePasswordSerializer
         if self.action in ["update", "partial_update"]:
             self.serializer_class = UserUpdateSerializer
+        if self.action == "change_password":
+            self.serializer_class = ChangePasswordSerializer
+        if self.action == "reset_password":
+            self.serializer_class = ResetPasswordSerializer
         return super().get_serializer_class()

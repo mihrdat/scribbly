@@ -72,6 +72,20 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            user = User.objects.get(email=value)
+            if not user.is_active:
+                raise serializers.ValidationError("User account is disabled.")
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No user with the given email was found.")
+
+        return value
+
+
 class TokenSerializer(serializers.ModelSerializer):
     token = serializers.CharField(source="key")
 
