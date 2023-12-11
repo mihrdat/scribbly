@@ -2,12 +2,12 @@ import os
 import dj_database_url
 from pathlib import Path
 
-from config.minio import *
-from config.Oauth.google import *
-
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+from config.minio import *
+from config.email import *
+from config.Oauth.google import *
+
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -129,3 +129,5 @@ SPECTACULAR_SETTINGS = {
 }
 
 BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL")
+
+RESET_PASSWORD_CONFIRM_URL = os.environ.get("RESET_PASSWORD_CONFIRM_URL")

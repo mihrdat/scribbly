@@ -1,6 +1,5 @@
 from django.db import transaction
 from django.contrib.auth import get_user_model
-from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework import status
 from rest_framework.response import Response
@@ -18,7 +17,7 @@ from .serializers import (
     TokenSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
-from .utils import encode_uid
+from .email import PasswordResetEmail
 
 User = get_user_model()
 
@@ -60,10 +59,14 @@ class UserViewSet(ModelViewSet):
     def reset_password(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = User.objects.get(email=serializer.validated_data["email"])
-        uid = encode_uid(user.pk)
-        token = default_token_generator.make_token(user)
-        return Response("OK")
+
+        email = serializer.validated_data["email"]
+        user = User.objects.get(email=email)
+        context = {"user": user}
+
+        PasswordResetEmail(request, context).send(to=[email])
+
+        return Response(status=status.HTTP_200_OK)
 
     def get_current_user(self):
         return self.request.user
