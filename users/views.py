@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 from rest_framework import status
@@ -14,6 +15,7 @@ from .serializers import (
     UserUpdateSerializer,
     ChangePasswordSerializer,
     ResetPasswordSerializer,
+    ResetPasswordConfirmSerializer,
     TokenSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
@@ -55,7 +57,7 @@ class UserViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(methods=["POST"], detail=False, permission_classes=[AllowAny])
+    @action(methods=["POST"], detail=False)
     def reset_password(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -65,6 +67,18 @@ class UserViewSet(ModelViewSet):
         context = {"user": user}
 
         PasswordResetEmail(request, context).send(to=[email])
+
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=False)
+    def reset_password_confirm(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.user
+        user.set_password(serializer.validated_data["new_password"])
+        user.last_login = timezone.now()
+        user.save(update_fields=["password", "last_login"])
 
         return Response(status=status.HTTP_200_OK)
 
@@ -78,7 +92,7 @@ class UserViewSet(ModelViewSet):
         return super().get_queryset()
 
     def get_permissions(self):
-        if self.action == "create":
+        if self.action in ["create", "reset_password", "reset_password_confirm"]:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
 
@@ -91,4 +105,6 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = ChangePasswordSerializer
         if self.action == "reset_password":
             self.serializer_class = ResetPasswordSerializer
+        if self.action == "reset_password_confirm":
+            self.serializer_class = ResetPasswordConfirmSerializer
         return super().get_serializer_class()
