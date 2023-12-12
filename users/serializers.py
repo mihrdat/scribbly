@@ -54,23 +54,27 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ["username", "email"]
 
 
-class ChangePasswordSerializer(serializers.Serializer):
-    current_password = serializers.CharField(max_length=128)
+class NewPasswordSerializer(serializers.Serializer):
     new_password = serializers.CharField(max_length=128)
 
-    def validate_current_password(self, value):
-        is_password_valid = self.context["request"].user.check_password(value)
-        if not is_password_valid:
-            raise serializers.ValidationError("Invalid password.")
-        return value
-
     def validate_new_password(self, value):
-        user = self.context["request"].user
+        user = getattr(self, "user", None) or self.context["request"].user
         try:
             validate_password(value, user)
         except exceptions.ValidationError as e:
             serializer_error = serializers.as_serializer_error(e)
             raise serializers.ValidationError(serializer_error["non_field_errors"])
+
+        return value
+
+
+class ChangePasswordSerializer(NewPasswordSerializer, serializers.Serializer):
+    current_password = serializers.CharField(max_length=128)
+
+    def validate_current_password(self, value):
+        is_password_valid = self.context["request"].user.check_password(value)
+        if not is_password_valid:
+            raise serializers.ValidationError("Invalid password.")
 
         return value
 
@@ -89,34 +93,23 @@ class ResetPasswordSerializer(serializers.Serializer):
         return value
 
 
-class ResetPasswordConfirmSerializer(serializers.Serializer):
+class ResetPasswordConfirmSerializer(NewPasswordSerializer, serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
-    new_password = serializers.CharField(max_length=128)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = None
-
-    def validate(self, attrs):
+    def validate_uid(self, value):
         try:
-            uid = decode_uid(attrs["uid"])
+            uid = decode_uid(value)
             self.user = User.objects.get(pk=uid)
         except (User.DoesNotExist, ValueError):
             raise serializers.ValidationError("Invalid user id or user doesn't exist.")
 
-        is_valid_token = default_token_generator.check_token(self.user, attrs["token"])
+        return value
+
+    def validate_token(self, value):
+        is_valid_token = default_token_generator.check_token(self.user, value)
         if not is_valid_token:
             raise serializers.ValidationError("Invalid token for given user.")
-
-        return attrs
-
-    def validate_new_password(self, value):
-        try:
-            validate_password(value, self.user)
-        except exceptions.ValidationError as e:
-            serializer_error = serializers.as_serializer_error(e)
-            raise serializers.ValidationError(serializer_error["non_field_errors"])
 
         return value
 

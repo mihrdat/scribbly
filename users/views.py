@@ -46,7 +46,7 @@ class UserViewSet(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user.set_password(serializer.data["new_password"])
+        user.set_password(serializer.validated_data["new_password"])
         user.save(update_fields=["password"])
 
         # Log out user from other systems
