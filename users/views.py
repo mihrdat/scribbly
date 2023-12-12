@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.utils import timezone
 from django.contrib.auth import get_user_model
 
 from rest_framework import status
@@ -11,11 +12,14 @@ from rest_framework.authtoken.models import Token
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
-    UserCreateOutPutSerializer,
+    UserUpdateSerializer,
     ChangePasswordSerializer,
+    ResetPasswordSerializer,
+    ResetPasswordConfirmSerializer,
     TokenSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
+from .email import PasswordResetEmail
 
 User = get_user_model()
 
@@ -42,15 +46,41 @@ class UserViewSet(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user.set_password(serializer.data["new_password"])
+        user.set_password(serializer.validated_data["new_password"])
         user.save(update_fields=["password"])
 
-        # Log out user from other systems after changing the password
+        # Log out user from other systems
         Token.objects.get(user=user).delete()
 
         new_token = Token.objects.create(user=user)
         serializer = TokenSerializer(new_token)
+
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=False)
+    def reset_password(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.get(email=email)
+        context = {"user": user}
+
+        PasswordResetEmail(request, context).send(to=[email])
+
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=False)
+    def reset_password_confirm(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.user
+        user.set_password(serializer.validated_data["new_password"])
+        user.last_login = timezone.now()
+        user.save(update_fields=["password", "last_login"])
+
+        return Response(status=status.HTTP_200_OK)
 
     def get_current_user(self):
         return self.request.user
@@ -62,26 +92,19 @@ class UserViewSet(ModelViewSet):
         return super().get_queryset()
 
     def get_permissions(self):
-        if self.action == "create":
+        if self.action in ["create", "reset_password", "reset_password_confirm"]:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
 
     def get_serializer_class(self):
         if self.action == "create":
             self.serializer_class = UserCreateSerializer
+        if self.action in ["update", "partial_update"]:
+            self.serializer_class = UserUpdateSerializer
         if self.action == "change_password":
             self.serializer_class = ChangePasswordSerializer
+        if self.action == "reset_password":
+            self.serializer_class = ResetPasswordSerializer
+        if self.action == "reset_password_confirm":
+            self.serializer_class = ResetPasswordConfirmSerializer
         return super().get_serializer_class()
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = self.perform_create(serializer)
-        headers = super().get_success_headers(serializer.data)
-        serializer = UserCreateOutPutSerializer(user)
-        return Response(
-            serializer.data, status=status.HTTP_201_CREATED, headers=headers
-        )
-
-    def perform_create(self, serializer):
-        return serializer.save()

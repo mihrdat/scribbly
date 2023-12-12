@@ -1,5 +1,4 @@
 from .common import *
-from config.email.dev import *
 
 DEBUG = True
 
