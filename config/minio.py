@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
 
 MINIO_STORAGE_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY")
