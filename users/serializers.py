@@ -54,28 +54,33 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ["username", "email"]
 
 
-class NewPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(max_length=128)
-
-    def validate_new_password(self, value):
-        user = getattr(self, "user", None) or self.context["request"].user
+class PasswordValidationMixin:
+    def is_valid_password(self, value, user, raise_exception=False):
         try:
             validate_password(value, user)
         except exceptions.ValidationError as e:
             serializer_error = serializers.as_serializer_error(e)
-            raise serializers.ValidationError(serializer_error["non_field_errors"])
+            if raise_exception:
+                raise serializers.ValidationError(serializer_error["non_field_errors"])
+            return False
+
+        return True
+
+
+class ChangePasswordSerializer(PasswordValidationMixin, serializers.Serializer):
+    current_password = serializers.CharField(max_length=128)
+    new_password = serializers.CharField(max_length=128)
+
+    def validate_current_password(self, value):
+        is_current_password_valid = self.context["request"].user.check_password(value)
+        if not is_current_password_valid:
+            raise serializers.ValidationError("Invalid password.")
 
         return value
 
-
-class ChangePasswordSerializer(NewPasswordSerializer, serializers.Serializer):
-    current_password = serializers.CharField(max_length=128)
-
-    def validate_current_password(self, value):
-        is_password_valid = self.context["request"].user.check_password(value)
-        if not is_password_valid:
-            raise serializers.ValidationError("Invalid password.")
-
+    def validate_new_password(self, value):
+        user = self.context["request"].user
+        self.is_valid_password(value, user, raise_exception=True)
         return value
 
 
@@ -93,9 +98,10 @@ class ResetPasswordSerializer(serializers.Serializer):
         return value
 
 
-class ResetPasswordConfirmSerializer(NewPasswordSerializer, serializers.Serializer):
+class ResetPasswordConfirmSerializer(PasswordValidationMixin, serializers.Serializer):
     uid = serializers.CharField()
     token = serializers.CharField()
+    new_password = serializers.CharField(max_length=128)
 
     def validate_uid(self, value):
         try:
@@ -111,6 +117,10 @@ class ResetPasswordConfirmSerializer(NewPasswordSerializer, serializers.Serializ
         if not is_valid_token:
             raise serializers.ValidationError("Invalid token for given user.")
 
+        return value
+
+    def validate_new_password(self, value):
+        self.is_valid_password(value, self.user, raise_exception=True)
         return value
 
 
