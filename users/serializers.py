@@ -19,11 +19,10 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, write_only=True)
-    token = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "password", "token"]
+        fields = ["id", "username", "email", "password"]
 
     def validate(self, attrs):
         user = User(**attrs)
@@ -43,9 +42,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
-
-    def get_token(self, user):
-        return Token.objects.create(user=user).key
 
 
 class UserUpdateSerializer(serializers.ModelSerializer):
@@ -139,13 +135,13 @@ class TokenSerializer(serializers.ModelSerializer):
 
 
 class ResendActivationSerializer(EmailValidationMixin, UserActivationMixin):
-    def validate(self, attrs):
-        super().validate(attrs)
+    def validate_email(self, value):
+        super().validate_email(value)
 
         if self.user.is_active:
             raise serializers.ValidationError("User account is already active.")
 
-        return attrs
+        return value
 
 
 class ResetPasswordSerializer(EmailValidationMixin, UserActivationMixin):
