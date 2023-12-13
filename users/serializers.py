@@ -54,6 +54,26 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ["username", "email"]
 
 
+class EmailValidationMixin(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            self.user = User.objects.get(email=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("No user with the given email was found.")
+
+        return value
+
+
+class UserActivationMixin(serializers.Serializer):
+    def validate(self, attrs):
+        if (not self.user.is_active) and (not self.user.has_usable_password()):
+            raise serializers.ValidationError("User account is disabled.")
+
+        return attrs
+
+
 class PasswordValidationMixin:
     def is_valid_password(self, value, user, raise_exception=False):
         try:
@@ -81,20 +101,6 @@ class ChangePasswordSerializer(PasswordValidationMixin, serializers.Serializer):
     def validate_new_password(self, value):
         user = self.context["request"].user
         self.is_valid_password(value, user, raise_exception=True)
-        return value
-
-
-class ResetPasswordSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate_email(self, value):
-        try:
-            user = User.objects.get(email=value)
-            if not user.is_active:
-                raise serializers.ValidationError("User account is disabled.")
-        except User.DoesNotExist:
-            raise serializers.ValidationError("No user with the given email was found.")
-
         return value
 
 
@@ -130,3 +136,17 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = Token
         fields = ["token"]
+
+
+class ResendActivationSerializer(EmailValidationMixin, UserActivationMixin):
+    def validate(self, attrs):
+        super().validate(attrs)
+
+        if self.user.is_active:
+            raise serializers.ValidationError("User account is already active.")
+
+        return attrs
+
+
+class ResetPasswordSerializer(EmailValidationMixin, UserActivationMixin):
+    pass

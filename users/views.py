@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
+from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
 from rest_framework import status
@@ -17,9 +18,12 @@ from .serializers import (
     ResetPasswordSerializer,
     ResetPasswordConfirmSerializer,
     TokenSerializer,
+    ResendActivationSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
-from .email import PasswordResetEmail
+from .email import PasswordResetEmail, ActivationEmail
+from .utils import generate_random_code
+from .constants import CacheTimeouts
 
 User = get_user_model()
 
@@ -62,11 +66,10 @@ class UserViewSet(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        email = serializer.validated_data["email"]
-        user = User.objects.get(email=email)
+        user = User.objects.get(email=serializer.validated_data["email"])
         context = {"user": user}
 
-        PasswordResetEmail(request, context).send(to=[email])
+        PasswordResetEmail(request, context).send(to=[user.email])
 
         return Response(status=status.HTTP_200_OK)
 
@@ -82,6 +85,21 @@ class UserViewSet(ModelViewSet):
 
         return Response(status=status.HTTP_200_OK)
 
+    @action(methods=["POST"], detail=False)
+    def resend_activation(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.user
+
+        code = generate_random_code()
+        cache.set(key=user.pk, value=code, timeout=CacheTimeouts.WEEK)
+
+        context = {"username": user.username, "code": code}
+        ActivationEmail(request, context).send(to=[user.email])
+
+        return Response(status=status.HTTP_200_OK)
+
     def get_current_user(self):
         return self.request.user
 
@@ -92,7 +110,12 @@ class UserViewSet(ModelViewSet):
         return super().get_queryset()
 
     def get_permissions(self):
-        if self.action in ["create", "reset_password", "reset_password_confirm"]:
+        if self.action in [
+            "create",
+            "reset_password",
+            "reset_password_confirm",
+            "resend_activation",
+        ]:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
 
@@ -107,4 +130,6 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = ResetPasswordSerializer
         if self.action == "reset_password_confirm":
             self.serializer_class = ResetPasswordConfirmSerializer
+        if self.action == "resend_activation":
+            self.serializer_class = ResendActivationSerializer
         return super().get_serializer_class()
