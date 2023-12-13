@@ -120,6 +120,9 @@ class UserViewSet(ModelViewSet):
         return super().get_permissions()
 
     def get_serializer_class(self):
+        if self.action == "me":
+            if self.request.method in ["PUT", "PATCH"]:
+                self.serializer_class = UserUpdateSerializer
         if self.action == "create":
             self.serializer_class = UserCreateSerializer
         if self.action in ["update", "partial_update"]:
