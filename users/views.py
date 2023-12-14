@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
 
@@ -20,6 +20,7 @@ from .serializers import (
     TokenSerializer,
     ResendActivationSerializer,
     ActivationConfirmSerializer,
+    DisableUserSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
 from .email import PasswordResetEmail, ActivationEmail
@@ -55,7 +56,7 @@ class UserViewSet(ModelViewSet):
         user.save(update_fields=["password"])
 
         # Log out user from other systems
-        Token.objects.get(user=user).delete()
+        Token.objects.filter(user=user).delete()
 
         new_token = Token.objects.create(user=user)
         serializer = TokenSerializer(new_token)
@@ -118,6 +119,20 @@ class UserViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(methods=["POST"], detail=False)
+    def disable(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.get(email=serializer.validated_data["email"])
+        user.is_active = False
+        user.set_unusable_password()
+        user.save(update_fields=["is_active", "password"])
+
+        Token.objects.filter(user=user).delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def get_current_user(self):
         return self.request.user
 
@@ -145,6 +160,8 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = ResendActivationSerializer
         if self.action == "activation_confirm":
             self.serializer_class = ActivationConfirmSerializer
+        if self.action == "disable":
+            self.serializer_class = DisableUserSerializer
         return super().get_serializer_class()
 
     def get_permissions(self):
@@ -156,4 +173,6 @@ class UserViewSet(ModelViewSet):
             "activation_confirm",
         ]:
             self.permission_classes = [AllowAny]
+        if self.action == "disable":
+            self.permission_classes = [IsAdminUser]
         return super().get_permissions()

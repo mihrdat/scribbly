@@ -157,3 +157,7 @@ class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
 
 class ResetPasswordSerializer(EmailValidationMixin, UserActivationMixin):
     pass
+class DisableUserSerializer(EmailValidationMixin, UserActivationMixin):
+    pass
+
+
