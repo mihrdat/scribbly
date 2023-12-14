@@ -21,6 +21,7 @@ from .serializers import (
     ResendActivationSerializer,
     ActivationConfirmSerializer,
     DisableUserSerializer,
+    EnableUserSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
 from .email import PasswordResetEmail, ActivationEmail
@@ -133,6 +134,17 @@ class UserViewSet(ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @action(methods=["POST"], detail=False)
+    def enable(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = User.objects.get(email=serializer.validated_data["email"])
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     def get_current_user(self):
         return self.request.user
 
@@ -162,6 +174,8 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = ActivationConfirmSerializer
         if self.action == "disable":
             self.serializer_class = DisableUserSerializer
+        if self.action == "enable":
+            self.serializer_class = EnableUserSerializer
         return super().get_serializer_class()
 
     def get_permissions(self):
@@ -173,6 +187,6 @@ class UserViewSet(ModelViewSet):
             "activation_confirm",
         ]:
             self.permission_classes = [AllowAny]
-        if self.action == "disable":
+        if self.action in ["disable", "enable"]:
             self.permission_classes = [IsAdminUser]
         return super().get_permissions()
