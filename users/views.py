@@ -72,7 +72,7 @@ class UserViewSet(ModelViewSet):
 
         PasswordResetEmail(request, context).send(to=[user.email])
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=["POST"], detail=False)
     def reset_password_confirm(self, request, *args, **kwargs):
@@ -84,7 +84,7 @@ class UserViewSet(ModelViewSet):
         user.last_login = timezone.now()
         user.save(update_fields=["password", "last_login"])
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=["POST"], detail=False)
     def resend_activation(self, request, *args, **kwargs):
@@ -99,7 +99,7 @@ class UserViewSet(ModelViewSet):
         context = {"username": user.username, "code": code}
         ActivationEmail(request, context).send(to=[user.email])
 
-        return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(methods=["POST"], detail=False)
     def activation_confirm(self, request, *args, **kwargs):
@@ -127,17 +127,6 @@ class UserViewSet(ModelViewSet):
             self.queryset = self.queryset.filter(pk=user.pk)
         return super().get_queryset()
 
-    def get_permissions(self):
-        if self.action in [
-            "create",
-            "reset_password",
-            "reset_password_confirm",
-            "resend_activation",
-            "activation_confirm",
-        ]:
-            self.permission_classes = [AllowAny]
-        return super().get_permissions()
-
     def get_serializer_class(self):
         if self.action == "me":
             if self.request.method in ["PUT", "PATCH"]:
@@ -157,3 +146,14 @@ class UserViewSet(ModelViewSet):
         if self.action == "activation_confirm":
             self.serializer_class = ActivationConfirmSerializer
         return super().get_serializer_class()
+
+    def get_permissions(self):
+        if self.action in [
+            "create",
+            "reset_password",
+            "reset_password_confirm",
+            "resend_activation",
+            "activation_confirm",
+        ]:
+            self.permission_classes = [AllowAny]
+        return super().get_permissions()

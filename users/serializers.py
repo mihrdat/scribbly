@@ -149,7 +149,7 @@ class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
     code = serializers.CharField()
 
     def validate_code(self, value):
-        if value != cache.get(key=self.initial_data.get("email")):
+        if value != cache.get(key=self.initial_data["email"]):
             raise serializers.ValidationError("The given code is invalid.")
 
         return value
