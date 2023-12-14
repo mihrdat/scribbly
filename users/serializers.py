@@ -67,7 +67,6 @@ class UserActivationMixin(serializers.Serializer):
     def validate(self, attrs):
         if (not self.user.is_active) and (not self.user.has_usable_password()):
             raise serializers.ValidationError("User account is disabled.")
-
         return attrs
 
 
@@ -92,7 +91,6 @@ class ChangePasswordSerializer(PasswordValidationMixin, serializers.Serializer):
         is_current_password_valid = self.context["request"].user.check_password(value)
         if not is_current_password_valid:
             raise serializers.ValidationError("Invalid password.")
-
         return value
 
     def validate_new_password(self, value):
@@ -119,7 +117,6 @@ class ResetPasswordConfirmSerializer(PasswordValidationMixin, serializers.Serial
         is_valid_token = default_token_generator.check_token(self.user, value)
         if not is_valid_token:
             raise serializers.ValidationError("Invalid token for given user.")
-
         return value
 
     def validate_new_password(self, value):
@@ -138,10 +135,8 @@ class TokenSerializer(serializers.ModelSerializer):
 class ResendActivationSerializer(EmailValidationMixin, UserActivationMixin):
     def validate_email(self, value):
         super().validate_email(value)
-
         if self.user.is_active:
             raise serializers.ValidationError("User account is already active.")
-
         return value
 
 
@@ -151,7 +146,6 @@ class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
     def validate_code(self, value):
         if value != cache.get(key=self.initial_data["email"]):
             raise serializers.ValidationError("The given code is invalid.")
-
         return value
 
 
@@ -160,7 +154,11 @@ class ResetPasswordSerializer(EmailValidationMixin, UserActivationMixin):
 
 
 class EnableUserSerializer(EmailValidationMixin):
-    pass
+    def validate_email(self, value):
+        super().validate_email(value)
+        if self.user.is_active:
+            raise serializers.ValidationError("User account is already enable.")
+        return value
 
 
 class DisableUserSerializer(EmailValidationMixin, UserActivationMixin):
