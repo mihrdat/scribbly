@@ -20,3 +20,8 @@ def generate_random_username():
     username = f"U-{random_number}"
 
     return username
+
+
+def generate_random_code(number_of_digits=5):
+    choices = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
+    return "".join(random.choices(choices, k=number_of_digits))
