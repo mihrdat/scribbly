@@ -1,4 +1,5 @@
 from django.core import exceptions
+from django.core.cache import cache
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth.password_validation import validate_password
@@ -140,6 +141,16 @@ class ResendActivationSerializer(EmailValidationMixin, UserActivationMixin):
 
         if self.user.is_active:
             raise serializers.ValidationError("User account is already active.")
+
+        return value
+
+
+class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
+    code = serializers.CharField()
+
+    def validate_code(self, value):
+        if value != cache.get(key=self.initial_data.get("email")):
+            raise serializers.ValidationError("The given code is invalid.")
 
         return value
 

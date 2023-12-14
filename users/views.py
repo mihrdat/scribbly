@@ -19,6 +19,7 @@ from .serializers import (
     ResetPasswordConfirmSerializer,
     TokenSerializer,
     ResendActivationSerializer,
+    ActivationConfirmSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
 from .email import PasswordResetEmail, ActivationEmail
@@ -93,12 +94,29 @@ class UserViewSet(ModelViewSet):
         user = serializer.user
 
         code = generate_random_code()
-        cache.set(key=user.pk, value=code, timeout=CacheTimeouts.WEEK)
+        cache.set(key=user.email, value=code, timeout=CacheTimeouts.WEEK)
 
         context = {"username": user.username, "code": code}
         ActivationEmail(request, context).send(to=[user.email])
 
         return Response(status=status.HTTP_200_OK)
+
+    @action(methods=["POST"], detail=False)
+    def activation_confirm(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        user = User.objects.get(email=email)
+        user.is_active = True
+        user.save(update_fields=["is_active"])
+
+        cache.delete(key=email)
+
+        token = Token.objects.create(user=user)
+        serializer = TokenSerializer(token)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def get_current_user(self):
         return self.request.user
@@ -115,6 +133,7 @@ class UserViewSet(ModelViewSet):
             "reset_password",
             "reset_password_confirm",
             "resend_activation",
+            "activation_confirm",
         ]:
             self.permission_classes = [AllowAny]
         return super().get_permissions()
@@ -135,4 +154,6 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = ResetPasswordConfirmSerializer
         if self.action == "resend_activation":
             self.serializer_class = ResendActivationSerializer
+        if self.action == "activation_confirm":
+            self.serializer_class = ActivationConfirmSerializer
         return super().get_serializer_class()
