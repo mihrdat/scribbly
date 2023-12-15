@@ -40,11 +40,12 @@ class UserViewSet(ModelViewSet):
     @action(methods=["GET", "PUT", "PATCH"], detail=False)
     def me(self, request, *args, **kwargs):
         self.get_object = self.get_current_user
-        if request.method == "PUT":
+        if request.method == "GET":
+            return self.retrieve(request, *args, **kwargs)
+        elif request.method == "PUT":
             return self.update(request, *args, **kwargs)
-        if request.method == "PATCH":
+        elif request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
-        return self.retrieve(request, *args, **kwargs)
 
     @transaction.atomic
     @action(methods=["POST"], detail=False)
@@ -103,6 +104,7 @@ class UserViewSet(ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    @transaction.atomic
     @action(methods=["POST"], detail=False)
     def activation_confirm(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -120,6 +122,7 @@ class UserViewSet(ModelViewSet):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @transaction.atomic
     @action(methods=["POST"], detail=False)
     def disable(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -158,24 +161,25 @@ class UserViewSet(ModelViewSet):
         if self.action == "me":
             if self.request.method in ["PUT", "PATCH"]:
                 self.serializer_class = UserUpdateSerializer
-        if self.action == "create":
+        elif self.action == "create":
             self.serializer_class = UserCreateSerializer
-        if self.action in ["update", "partial_update"]:
+        elif self.action in ["update", "partial_update"]:
             self.serializer_class = UserUpdateSerializer
-        if self.action == "change_password":
+        elif self.action == "change_password":
             self.serializer_class = ChangePasswordSerializer
-        if self.action == "reset_password":
+        elif self.action == "reset_password":
             self.serializer_class = ResetPasswordSerializer
-        if self.action == "reset_password_confirm":
+        elif self.action == "reset_password_confirm":
             self.serializer_class = ResetPasswordConfirmSerializer
-        if self.action == "resend_activation":
+        elif self.action == "resend_activation":
             self.serializer_class = ResendActivationSerializer
-        if self.action == "activation_confirm":
+        elif self.action == "activation_confirm":
             self.serializer_class = ActivationConfirmSerializer
-        if self.action == "disable":
+        elif self.action == "disable":
             self.serializer_class = DisableUserSerializer
-        if self.action == "enable":
+        elif self.action == "enable":
             self.serializer_class = EnableUserSerializer
+
         return super().get_serializer_class()
 
     def get_permissions(self):
