@@ -51,13 +51,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ["username", "email"]
 
 
-class BaseMixin(serializers.Serializer):
+class BaseSerializerMixin(serializers.Serializer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = None
 
 
-class EmailValidationMixin(BaseMixin):
+class EmailValidationMixin(BaseSerializerMixin):
     email = serializers.EmailField()
 
     def validate_email(self, value):
@@ -69,14 +69,14 @@ class EmailValidationMixin(BaseMixin):
         return value
 
 
-class UserActivationMixin(BaseMixin):
+class UserStateMixin(BaseSerializerMixin):
     def validate(self, attrs):
         if (not self.user.is_active) and (not self.user.has_usable_password()):
-            raise serializers.ValidationError("User account is disabled.")
+            raise serializers.ValidationError("The user account has been disabled.")
         return attrs
 
 
-class PasswordValidationMixin(BaseMixin):
+class PasswordValidationMixin(BaseSerializerMixin):
     new_password = serializers.CharField(max_length=128)
 
     def validate_new_password(self, value):
@@ -100,7 +100,7 @@ class ChangePasswordSerializer(PasswordValidationMixin):
         return value
 
 
-class ResetPasswordSerializer(EmailValidationMixin, UserActivationMixin):
+class ResetPasswordSerializer(EmailValidationMixin, UserStateMixin):
     pass
 
 
@@ -124,23 +124,17 @@ class ResetPasswordConfirmSerializer(PasswordValidationMixin):
         return value
 
 
-class TokenSerializer(serializers.ModelSerializer):
-    token = serializers.CharField(source="key")
-
-    class Meta:
-        model = Token
-        fields = ["token"]
-
-
-class ResendActivationSerializer(EmailValidationMixin, UserActivationMixin):
-    def validate_email(self, value):
-        super().validate_email(value)
+class ResendActivationSerializer(EmailValidationMixin, UserStateMixin):
+    def validate(self, attrs):
+        super().validate(attrs)
         if self.user.is_active:
-            raise serializers.ValidationError("User account is already active.")
-        return value
+            raise serializers.ValidationError(
+                "The user account has already been activated."
+            )
+        return attrs
 
 
-class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
+class ActivationConfirmSerializer(EmailValidationMixin, UserStateMixin):
     code = serializers.CharField()
 
     def validate_code(self, value):
@@ -149,13 +143,29 @@ class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
         return value
 
 
-class DisableUserSerializer(EmailValidationMixin, UserActivationMixin):
-    pass
+class TokenSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(source="key")
+
+    class Meta:
+        model = Token
+        fields = ["token"]
 
 
-class EnableUserSerializer(EmailValidationMixin):
-    def validate_email(self, value):
-        super().validate_email(value)
-        if self.user.is_active:
-            raise serializers.ValidationError("User account is already enable.")
-        return value
+class DeactivateUserSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        user = self.context["user"]
+        if not user.is_active:
+            raise serializers.ValidationError(
+                "The user account has already been deactivated."
+            )
+        return attrs
+
+
+class ActivateUserSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        user = self.context["user"]
+        if user.is_active:
+            raise serializers.ValidationError(
+                "The user account has already been activated."
+            )
+        return attrs

@@ -20,8 +20,8 @@ from .serializers import (
     TokenSerializer,
     ResendActivationSerializer,
     ActivationConfirmSerializer,
-    DisableUserSerializer,
-    EnableUserSerializer,
+    DeactivateUserSerializer,
+    ActivateUserSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
 from .email import PasswordResetEmail, ActivationEmail
@@ -123,12 +123,15 @@ class UserViewSet(ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @transaction.atomic
-    @action(methods=["POST"], detail=False)
-    def disable(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    @action(methods=["POST"], detail=True)
+    def deactivate(self, request, *args, **kwargs):
+        user = User.objects.get(pk=self.kwargs["pk"])
+        context = self.get_serializer_context()
+        context["user"] = user
+
+        serializer = self.get_serializer(data=request.data, context=context)
         serializer.is_valid(raise_exception=True)
 
-        user = User.objects.get(email=serializer.validated_data["email"])
         user.is_active = False
         user.set_unusable_password()
         user.save(update_fields=["is_active", "password"])
@@ -137,12 +140,15 @@ class UserViewSet(ModelViewSet):
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(methods=["POST"], detail=False)
-    def enable(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    @action(methods=["POST"], detail=True)
+    def activate(self, request, *args, **kwargs):
+        user = User.objects.get(pk=self.kwargs["pk"])
+        context = self.get_serializer_context()
+        context["user"] = user
+
+        serializer = self.get_serializer(data=request.data, context=context)
         serializer.is_valid(raise_exception=True)
 
-        user = User.objects.get(email=serializer.validated_data["email"])
         user.is_active = True
         user.save(update_fields=["is_active"])
 
@@ -175,10 +181,10 @@ class UserViewSet(ModelViewSet):
             self.serializer_class = ResendActivationSerializer
         elif self.action == "activation_confirm":
             self.serializer_class = ActivationConfirmSerializer
-        elif self.action == "disable":
-            self.serializer_class = DisableUserSerializer
-        elif self.action == "enable":
-            self.serializer_class = EnableUserSerializer
+        elif self.action == "deactivate":
+            self.serializer_class = DeactivateUserSerializer
+        elif self.action == "activate":
+            self.serializer_class = ActivateUserSerializer
 
         return super().get_serializer_class()
 
@@ -191,6 +197,6 @@ class UserViewSet(ModelViewSet):
             "activation_confirm",
         ]:
             self.permission_classes = [AllowAny]
-        if self.action in ["disable", "enable"]:
+        if self.action in ["deactivate", "activate"]:
             self.permission_classes = [IsAdminUser]
         return super().get_permissions()
