@@ -54,6 +54,10 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 class EmailValidationMixin(serializers.Serializer):
     email = serializers.EmailField()
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
     def validate_email(self, value):
         try:
             self.user = User.objects.get(email=value)
@@ -64,6 +68,10 @@ class EmailValidationMixin(serializers.Serializer):
 
 
 class UserActivationMixin(serializers.Serializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
     def validate(self, attrs):
         if (not self.user.is_active) and (not self.user.has_usable_password()):
             raise serializers.ValidationError("User account is disabled.")
@@ -71,6 +79,10 @@ class UserActivationMixin(serializers.Serializer):
 
 
 class PasswordValidationMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
     def is_valid_password(self, value, user, raise_exception=False):
         try:
             validate_password(value, user)
