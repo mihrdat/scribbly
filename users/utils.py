@@ -1,3 +1,4 @@
+import re
 import random
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -25,3 +26,8 @@ def generate_random_username():
 def generate_random_code(number_of_digits=5):
     choices = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
     return "".join(random.choices(choices, k=number_of_digits))
+
+
+def is_iranian_phone_number(phone_number):
+    pattern = re.compile(r"^(?:\+98|0098|0)9[0-9]{9}$")
+    return bool(pattern.match(phone_number))
