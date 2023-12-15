@@ -25,18 +25,36 @@ class LoginSerializer(serializers.Serializer):
 
     def validate_password(self, value):
         if self.user:
+            if self.is_user_disabled(self.user):
+                return
+
+            if not self.user.has_usable_password():
+                raise serializers.ValidationError(
+                    "No password has been registered for this account."
+                )
+
             is_valid_password = self.user.check_password(value)
             if not is_valid_password:
                 raise serializers.ValidationError(
                     "Unable to log in with provided password."
                 )
+
         return value
 
     def validate(self, attrs):
+        if self.is_user_disabled(self.user):
+            raise serializers.ValidationError("The user account has been disabled.")
+
         if not self.user.is_active:
-            raise serializers.ValidationError("User account is disabled.")
+            raise serializers.ValidationError(
+                "The user account has not been activated."
+            )
+
         return super().validate(attrs)
 
     def get_token(self, obj):
         (token, created) = Token.objects.get_or_create(user=self.user)
         return token.key
+
+    def is_user_disabled(self, user):
+        return (not user.is_active) and (not user.has_usable_password())
