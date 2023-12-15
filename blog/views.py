@@ -39,12 +39,12 @@ class AuthorViewSet(
     @action(methods=["GET", "PUT", "PATCH"], detail=False)
     def me(self, request, *args, **kwargs):
         self.get_object = self.get_current_author
-        if request.method == "PUT":
+        if request.method == "GET":
+            return self.retrieve(request, *args, **kwargs)
+        elif request.method == "PUT":
             return self.update(request, *args, **kwargs)
         elif request.method == "PATCH":
             return self.partial_update(request, *args, **kwargs)
-
-        return self.retrieve(request, *args, **kwargs)
 
     def get_current_author(self):
         return self.request.user.author

@@ -26,5 +26,5 @@ class GoogleAuthSerializer(serializers.Serializer):
     def validate(self, attrs):
         error = attrs.get("error")
         if error is not None:
-            raise serializers.ValidationError({"error": error})
+            raise serializers.ValidationError(error)
         return super().validate(attrs)

@@ -51,7 +51,13 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         fields = ["username", "email"]
 
 
-class EmailValidationMixin(serializers.Serializer):
+class BaseSerializerMixin(serializers.Serializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = None
+
+
+class EmailValidationMixin(BaseSerializerMixin):
     email = serializers.EmailField()
 
     def validate_email(self, value):
@@ -63,48 +69,44 @@ class EmailValidationMixin(serializers.Serializer):
         return value
 
 
-class UserActivationMixin(serializers.Serializer):
+class UserStateMixin(BaseSerializerMixin):
     def validate(self, attrs):
         if (not self.user.is_active) and (not self.user.has_usable_password()):
-            raise serializers.ValidationError("User account is disabled.")
-
+            raise serializers.ValidationError("The user account has been disabled.")
         return attrs
 
 
-class PasswordValidationMixin:
-    def is_valid_password(self, value, user, raise_exception=False):
-        try:
-            validate_password(value, user)
-        except exceptions.ValidationError as e:
-            serializer_error = serializers.as_serializer_error(e)
-            if raise_exception:
-                raise serializers.ValidationError(serializer_error["non_field_errors"])
-            return False
-
-        return True
-
-
-class ChangePasswordSerializer(PasswordValidationMixin, serializers.Serializer):
-    current_password = serializers.CharField(max_length=128)
+class PasswordValidationMixin(BaseSerializerMixin):
     new_password = serializers.CharField(max_length=128)
-
-    def validate_current_password(self, value):
-        is_current_password_valid = self.context["request"].user.check_password(value)
-        if not is_current_password_valid:
-            raise serializers.ValidationError("Invalid password.")
-
-        return value
 
     def validate_new_password(self, value):
-        user = self.context["request"].user
-        self.is_valid_password(value, user, raise_exception=True)
+        try:
+            validate_password(value, self.user)
+        except exceptions.ValidationError as e:
+            serializer_error = serializers.as_serializer_error(e)
+            raise serializers.ValidationError(serializer_error["non_field_errors"])
+
         return value
 
 
-class ResetPasswordConfirmSerializer(PasswordValidationMixin, serializers.Serializer):
+class ChangePasswordSerializer(PasswordValidationMixin):
+    current_password = serializers.CharField(max_length=128)
+
+    def validate_current_password(self, value):
+        self.user = self.context["request"].user
+        is_current_password_valid = self.user.check_password(value)
+        if not is_current_password_valid:
+            raise serializers.ValidationError("Invalid password.")
+        return value
+
+
+class ResetPasswordSerializer(EmailValidationMixin, UserStateMixin):
+    pass
+
+
+class ResetPasswordConfirmSerializer(PasswordValidationMixin):
     uid = serializers.CharField()
     token = serializers.CharField()
-    new_password = serializers.CharField(max_length=128)
 
     def validate_uid(self, value):
         try:
@@ -119,11 +121,25 @@ class ResetPasswordConfirmSerializer(PasswordValidationMixin, serializers.Serial
         is_valid_token = default_token_generator.check_token(self.user, value)
         if not is_valid_token:
             raise serializers.ValidationError("Invalid token for given user.")
-
         return value
 
-    def validate_new_password(self, value):
-        self.is_valid_password(value, self.user, raise_exception=True)
+
+class ResendActivationSerializer(EmailValidationMixin, UserStateMixin):
+    def validate(self, attrs):
+        super().validate(attrs)
+        if self.user.is_active:
+            raise serializers.ValidationError(
+                "The user account has already been activated."
+            )
+        return attrs
+
+
+class ActivationConfirmSerializer(EmailValidationMixin, UserStateMixin):
+    code = serializers.CharField()
+
+    def validate_code(self, value):
+        if value != cache.get(key=self.initial_data["email"]):
+            raise serializers.ValidationError("The given code is invalid.")
         return value
 
 
@@ -135,25 +151,21 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ["token"]
 
 
-class ResendActivationSerializer(EmailValidationMixin, UserActivationMixin):
-    def validate_email(self, value):
-        super().validate_email(value)
-
-        if self.user.is_active:
-            raise serializers.ValidationError("User account is already active.")
-
-        return value
-
-
-class ActivationConfirmSerializer(EmailValidationMixin, UserActivationMixin):
-    code = serializers.CharField()
-
-    def validate_code(self, value):
-        if value != cache.get(key=self.initial_data["email"]):
-            raise serializers.ValidationError("The given code is invalid.")
-
-        return value
+class DeactivateUserSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        user = self.context["user"]
+        if not user.is_active:
+            raise serializers.ValidationError(
+                "The user account has already been deactivated."
+            )
+        return attrs
 
 
-class ResetPasswordSerializer(EmailValidationMixin, UserActivationMixin):
-    pass
+class ActivateUserSerializer(serializers.Serializer):
+    def validate(self, attrs):
+        user = self.context["user"]
+        if user.is_active:
+            raise serializers.ValidationError(
+                "The user account has already been activated."
+            )
+        return attrs
