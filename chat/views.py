@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
+
 from rest_framework.viewsets import ReadOnlyModelViewSet
+
 from .serializers import ChatSerializers, MessageSerializers
 from .models import Chat, Message
 
@@ -16,9 +19,5 @@ class MessageViewSet(ReadOnlyModelViewSet):
     serializer_class = MessageSerializers
 
     def get_queryset(self):
-        return (
-            super()
-            .get_queryset()
-            .filter(chat=self.kwargs["chat_pk"])
-            .order_by("created_at")
-        )
+        chat = get_object_or_404(Chat, pk=self.kwargs["chat_pk"])
+        return chat.messages.all().order_by("created_at")
