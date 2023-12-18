@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from .models import Chat, Message
+from .models import Room, Message
 
 User = get_user_model()
 
@@ -11,11 +11,11 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "email", "username"]
 
 
-class ChatSerializers(serializers.ModelSerializer):
+class RoomSerializers(serializers.ModelSerializer):
     partner = UserSerializer(read_only=True)
 
     class Meta:
-        model = Chat
+        model = Room
         fields = ["id", "partner"]
 
 

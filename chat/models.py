@@ -6,9 +6,10 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class Chat(models.Model):
+class Room(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="chats")
+    name = models.CharField(max_length=55, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="rooms")
     partner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
 
     class Meta:
@@ -22,4 +23,4 @@ class Message(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
     recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
-    chats = models.ManyToManyField(Chat, related_name="messages")
+    rooms = models.ManyToManyField(Room, related_name="messages")
