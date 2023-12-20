@@ -22,4 +22,4 @@ class RoomSerializers(serializers.ModelSerializer):
 class MessageSerializers(serializers.ModelSerializer):
     class Meta:
         model = Message
-        fields = ["id", "content", "created_at", "sender", "recipient"]
+        fields = ["id", "content", "created_at", "sender_id", "recipient_id"]

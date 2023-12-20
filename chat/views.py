@@ -1,7 +1,8 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 
 from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 
 from .serializers import RoomSerializers, MessageSerializers
 from .models import Room, Message
@@ -11,6 +12,11 @@ class RoomViewSet(ReadOnlyModelViewSet):
     queryset = Room.objects.select_related("partner").all()
     serializer_class = RoomSerializers
     permission_classes = [IsAuthenticated]
+
+    @action(methods=["GET"], detail=True)
+    def history(self, request, *args, **kwargs):
+        room = get_object_or_404(Room, pk=self.kwargs["pk"])
+        return render(request, "history.html", {"partner": room.partner})
 
     def get_queryset(self):
         return super().get_queryset().filter(user=self.request.user)
