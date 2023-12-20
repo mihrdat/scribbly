@@ -8,13 +8,13 @@ User = get_user_model()
 
 class Room(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=55, unique=True)
+    name = models.CharField(max_length=55)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="rooms")
     partner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="+")
 
     class Meta:
         unique_together = [
-            ["user", "partner"],
+            ["name", "user", "partner"],
         ]
 
 
