@@ -15,8 +15,7 @@ class RoomViewSet(ReadOnlyModelViewSet):
 
     @action(methods=["GET"], detail=True)
     def history(self, request, *args, **kwargs):
-        room = get_object_or_404(Room, pk=self.kwargs["pk"])
-        return render(request, "history.html", {"partner": room.partner})
+        return render(request, "lobby.html")
 
     def get_queryset(self):
         return super().get_queryset().filter(user=self.request.user)

@@ -134,3 +134,21 @@ SPECTACULAR_SETTINGS = {
 BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL")
 
 RESET_PASSWORD_CONFIRM_URL = os.environ.get("RESET_PASSWORD_CONFIRM_URL")
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels_redis.core.RedisChannelLayer",
+#         "CONFIG": {
+#             "hosts": [
+#                 ("localhost", 6379),
+#             ],
+#         },
+#     },
+# }

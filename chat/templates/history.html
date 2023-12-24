@@ -15,96 +15,92 @@
       body {
         font-family: Inter, "Courier New", Courier, monospace;
       }
+      /* Width */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      /* Track */
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      /* Handle */
+      ::-webkit-scrollbar-thumb {
+        background: #999;
+        border-radius: 100px;
+      }
+      /* Handle on hover */
+      ::-webkit-scrollbar-thumb:hover {
+        background: #777;
+      }
     </style>
   </head>
-  {% block html_body %}
   <body>
-    <div class="flex h-full max-w-xl mx-auto min-h-screen">
-      <main class="flex-1 p-4">
-        <div
-          class="rounded-lg border bg-card text-card-foreground shadow-sm flex flex-col h-full"
-          data-v0-t="card"
-        >
-          <div class="flex flex-col h-full flex-1">
-            <div class="flex gap-2 items-center p-4 border-b">
-              <div class="size-10 bg-neutral-200 rounded-full overflow-hidden">
-                {% if partner.author.avatar %}
-                <img
-                  src="{{ partner.author.avatar }}"
-                  alt="user profile"
-                  class="w-full h-full object-cover"
-                />
-                {% endif %}
-              </div>
-              <h3 class="tracking-tight text-lg font-bold">
-                {{ partner.username }}
-              </h3>
-            </div>
-            <div
-              id="loading"
-              class="flex justify-center mt-32 animate-[spin_1.25s_linear_infinite] text-neutral-500"
+    <main class="mx-auto max-w-xl h-screen p-4">
+      <div
+        class="rounded-lg border bg-card text-card-foreground overflow-hidden shadow-sm flex flex-col h-full"
+        data-v0-t="card"
+      >
+        <div class="flex flex-[0.1] gap-2 items-center p-4 border-b">
+          <div class="size-14 bg-neutral-200 rounded-full overflow-hidden">
+            <img
+              id="user-avatar"
+              alt="user profile"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="flex flex-col">
+            <h3 class="tracking-tight text-lg font-bold">U-88231640</h3>
+            <div class="tracking-tight text-sm text-blue-400">Online</div>
+          </div>
+        </div>
+        <div class="p-4 flex-1 overflow-y-auto text-sm" id="messages"></div>
+        <div class="p-2 border-t flex-[0.05]">
+          <form class="relative">
+            <input
+              class="flex h-10 border border-input px-3 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 pr-12 pl-12 py-2 rounded-full text-sm bg-gray-100 w-full"
+              placeholder="Type your message here..."
+              type="text"
+            />
+            <button
+              class="absolute inset-y-0 left-4 text-neutral-500 items-center"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="48"
-                height="48"
                 viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="lucide lucide-loader"
+                fill="currentColor"
+                class="w-6 h-6"
               >
-                <line x1="12" x2="12" y1="2" y2="6" />
-                <line x1="12" x2="12" y1="18" y2="22" />
-                <line x1="4.93" x2="7.76" y1="4.93" y2="7.76" />
-                <line x1="16.24" x2="19.07" y1="16.24" y2="19.07" />
-                <line x1="2" x2="6" y1="12" y2="12" />
-                <line x1="18" x2="22" y1="12" y2="12" />
-                <line x1="4.93" x2="7.76" y1="19.07" y2="16.24" />
-                <line x1="16.24" x2="19.07" y1="7.76" y2="4.93" />
+                <path
+                  fill-rule="evenodd"
+                  d="M18.97 3.659a2.25 2.25 0 0 0-3.182 0l-10.94 10.94a3.75 3.75 0 1 0 5.304 5.303l7.693-7.693a.75.75 0 0 1 1.06 1.06l-7.693 7.693a5.25 5.25 0 1 1-7.424-7.424l10.939-10.94a3.75 3.75 0 1 1 5.303 5.304L9.097 18.835l-.008.008-.007.007-.002.002-.003.002A2.25 2.25 0 0 1 5.91 15.66l7.81-7.81a.75.75 0 0 1 1.061 1.06l-7.81 7.81a.75.75 0 0 0 1.054 1.068L18.97 6.84a2.25 2.25 0 0 0 0-3.182Z"
+                  clip-rule="evenodd"
+                />
               </svg>
-            </div>
-            <div class="p-6 flex-1 overflow-y-auto text-sm" id="messages"></div>
-          </div>
-          <div class="p-2 border-t">
-            <form class="relative">
-              <input
-                class="flex h-10 border border-input px-3 ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-500 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 pr-12 pl-3 py-2 rounded-full text-sm bg-gray-100 w-full"
-                placeholder="Type your message here..."
-                type="text"
-              />
-              <div class="absolute inset-y-0 right-0 flex items-center px-1.5">
-                <button
-                  class="text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 p-1 rounded-full text-blue-500 w-8 h-8 flex items-center justify-center"
+            </button>
+            <div class="absolute inset-y-0 right-0 flex items-center px-1.5">
+              <button
+                class="text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 p-1 rounded-full text-blue-500 w-8 h-8 flex items-center justify-center"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="w-6 h-6"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.7"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    class="lucide lucide-send-horizontal"
-                  >
-                    <path d="m3 3 3 9-3 9 19-9Z" />
-                    <path d="M6 12h16" />
-                  </svg>
-                </button>
-              </div>
-            </form>
-          </div>
+                  <path
+                    d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </form>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
     <script>
       async function main() {
         const messagesElement = document.getElementById("messages");
-        const loadingElement = document.getElementById("loading");
+        const userAvatarElement = document.getElementById("user-avatar");
 
         const splitedURL = window.location.pathname.split("/");
         const roomId = splitedURL[5];
@@ -115,8 +111,6 @@
           const user = await getUser();
           const messages = await getMessages(roomId);
 
-          loadingElement.classList.add("hidden");
-
           messages.forEach((message) => {
             let messageElement = document.createElement("div");
             const messageContent = message.content;
@@ -126,9 +120,10 @@
             );
 
             if (message.sender_id === user.id) {
+              messageElement.className = "flex justify-end";
               messageElement.innerHTML = `
-              <div class="flex items-end justify-end">
-                <div class="bg-blue-100 rounded-lg px-2 pt-2 pb-1 mt-2 text-right flex flex-col items-start gap-1">
+              <div class="flex items-end justify-end max-w-[350px]">
+                <div class="bg-blue-100 rounded-lg px-2 pt-2 pb-1 mt-2 text-left flex flex-col items-start gap-1">
                   <div>
                     ${messageContent}
                   </div>
@@ -139,9 +134,10 @@
               </div>
             `;
             } else {
+              messageElement.className = "flex justify-start";
               messageElement.innerHTML = `
-              <div class="flex items-end justify-start">
-                <div class="bg-gray-200 rounded-lg px-2 pt-2 pb-1 mt-2 text-right flex flex-col items-start gap-1">
+              <div class="flex items-end justify-start max-w-[350px]">
+                <div class="bg-gray-200 rounded-lg px-2 pt-2 pb-1 mt-2 text-left flex flex-col items-start gap-1">
                   <div>
                     ${messageContent}
                   </div>
@@ -152,7 +148,6 @@
               </div>
             `;
             }
-
             messagesElement.appendChild(messageElement);
           });
         }
@@ -175,5 +170,4 @@
       main();
     </script>
   </body>
-  {% endblock html_body %}
 </html>
