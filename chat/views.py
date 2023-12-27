@@ -1,6 +1,12 @@
 from django.shortcuts import get_object_or_404, render
 
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.viewsets import GenericViewSet
+from rest_framework.mixins import (
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    DestroyModelMixin,
+)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
@@ -8,7 +14,13 @@ from .serializers import RoomSerializers, MessageSerializers
 from .models import Room, Message
 
 
-class RoomViewSet(ReadOnlyModelViewSet):
+class RoomViewSet(
+    CreateModelMixin,
+    ListModelMixin,
+    RetrieveModelMixin,
+    DestroyModelMixin,
+    GenericViewSet,
+):
     queryset = Room.objects.select_related("partner").all()
     serializer_class = RoomSerializers
     permission_classes = [IsAuthenticated]
@@ -21,7 +33,7 @@ class RoomViewSet(ReadOnlyModelViewSet):
         return super().get_queryset().filter(user=self.request.user)
 
 
-class MessageViewSet(ReadOnlyModelViewSet):
+class MessageViewSet(GenericViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializers
     permission_classes = [IsAuthenticated]

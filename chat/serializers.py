@@ -12,11 +12,27 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RoomSerializers(serializers.ModelSerializer):
-    partner = UserSerializer(read_only=True)
+    partner = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(is_staff=True)
+    )
 
     class Meta:
         model = Room
-        fields = ["id", "partner"]
+        fields = ["id", "name", "user", "partner"]
+        read_only_fields = ["name", "user"]
+
+    def validate_partner(self, value):
+        user = self.context["request"].user
+        if Room.objects.filter(user=user, partner=value).exists():
+            raise serializers.ValidationError(
+                "There is currently an open chat with this admin."
+            )
+        return value
+
+    def create(self, validated_data):
+        user = self.context["request"].user
+        validated_data["user"] = user
+        return super().create(validated_data)
 
 
 class MessageSerializers(serializers.ModelSerializer):
