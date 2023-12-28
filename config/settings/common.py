@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from config.minio import *
 from config.email import *
-from config.Oauth.google import *
+from config.auth.google import *
 
 load_dotenv()
 

@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
+from django.shortcuts import redirect
 from django.core.cache import cache
 from django.contrib.auth import get_user_model
 
@@ -9,6 +10,8 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from rest_framework.decorators import action
 from rest_framework.authtoken.models import Token
+from rest_framework.generics import GenericAPIView
+from rest_framework.views import APIView
 
 from .serializers import (
     UserSerializer,
@@ -22,11 +25,15 @@ from .serializers import (
     ActivationConfirmSerializer,
     DeactivateUserSerializer,
     ActivateUserSerializer,
+    LoginSerializer,
+    GoogleAuthSerializer,
+    GoogleLoginOutputSerializer,
 )
 from .pagination import DefaultLimitOffsetPagination
 from .email import PasswordResetEmail, ActivationEmail
 from .utils import generate_random_code
 from .constants import CacheTimeouts
+from .services import GoogleLoginService
 
 User = get_user_model()
 
@@ -200,3 +207,63 @@ class UserViewSet(ModelViewSet):
         if self.action in ["deactivate", "activate"]:
             self.permission_classes = [IsAdminUser]
         return super().get_permissions()
+
+
+class LoginView(GenericAPIView):
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LogoutView(GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        Token.objects.filter(user=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class GoogleLoginRedirectApi(APIView):
+    def get(self, request, *args, **kwargs):
+        google_login_flow = GoogleLoginService()
+        authorization_url, state = google_login_flow.get_authorization_url()
+        request.session["google_oauth2_state"] = state
+        return redirect(authorization_url)
+
+
+class GoogleLoginApi(APIView):
+    @transaction.atomic
+    def get(self, request, *args, **kwargs):
+        serializer = GoogleAuthSerializer(data=request.GET)
+        serializer.is_valid(raise_exception=True)
+
+        code = serializer.validated_data.get("code")
+        state = serializer.validated_data.get("state")
+
+        session_state = request.session.get("google_oauth2_state")
+
+        if (session_state is None) or (state != session_state):
+            return Response(
+                {"error": "CSRF check failed."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        del request.session["google_oauth2_state"]
+
+        service = GoogleLoginService()
+        google_tokens = service.get_google_tokens(code=code)
+        user_info = service.get_user_info(google_tokens=google_tokens)
+
+        email = user_info["email"]
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = User.objects.create_user(email=email, is_active=True)
+
+        user.last_login = timezone.now()
+        user.save(update_fields=["last_login"])
+
+        serializer = GoogleLoginOutputSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
