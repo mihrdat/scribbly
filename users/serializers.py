@@ -151,20 +151,18 @@ class TokenSerializer(serializers.ModelSerializer):
         fields = ["token"]
 
 
-class DeactivateUserSerializer(serializers.Serializer):
+class DeactivateUserSerializer(BaseSerializerMixin):
     def validate(self, attrs):
-        user = self.context["user"]
-        if not user.is_active:
+        if not self.user.is_active:
             raise serializers.ValidationError(
                 "The user account has already been deactivated."
             )
         return attrs
 
 
-class ActivateUserSerializer(serializers.Serializer):
+class ActivateUserSerializer(BaseSerializerMixin):
     def validate(self, attrs):
-        user = self.context["user"]
-        if user.is_active:
+        if self.user.is_active:
             raise serializers.ValidationError(
                 "The user account has already been activated."
             )

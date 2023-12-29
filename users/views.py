@@ -133,10 +133,9 @@ class UserViewSet(ModelViewSet):
     @action(methods=["POST"], detail=True)
     def deactivate(self, request, *args, **kwargs):
         user = User.objects.get(pk=self.kwargs["pk"])
-        context = self.get_serializer_context()
-        context["user"] = user
 
-        serializer = self.get_serializer(data=request.data, context=context)
+        serializer = self.get_serializer(data=request.data)
+        serializer.user = user
         serializer.is_valid(raise_exception=True)
 
         user.is_active = False
@@ -150,10 +149,9 @@ class UserViewSet(ModelViewSet):
     @action(methods=["POST"], detail=True)
     def activate(self, request, *args, **kwargs):
         user = User.objects.get(pk=self.kwargs["pk"])
-        context = self.get_serializer_context()
-        context["user"] = user
 
-        serializer = self.get_serializer(data=request.data, context=context)
+        serializer = self.get_serializer(data=request.data)
+        serializer.user = user
         serializer.is_valid(raise_exception=True)
 
         user.is_active = True
