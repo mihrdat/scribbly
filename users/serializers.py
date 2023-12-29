@@ -77,7 +77,7 @@ class UserStateMixin(BaseSerializerMixin):
 
 
 class PasswordValidationMixin(BaseSerializerMixin):
-    new_password = serializers.CharField(max_length=128)
+    new_password = serializers.CharField(max_length=128, write_only=True)
 
     def validate_new_password(self, value):
         try:
@@ -90,7 +90,7 @@ class PasswordValidationMixin(BaseSerializerMixin):
 
 
 class ChangePasswordSerializer(PasswordValidationMixin):
-    current_password = serializers.CharField(max_length=128)
+    current_password = serializers.CharField(max_length=128, write_only=True)
 
     def validate_current_password(self, value):
         self.user = self.context["request"].user
