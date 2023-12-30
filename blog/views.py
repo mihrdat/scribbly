@@ -17,6 +17,7 @@ from .models import Author, Category, Article, ArticleImage, ArticleLike, Commen
 from .serializers import (
     AuthorSerializer,
     CategorySerializer,
+    CategoryCreateSerializer,
     ArticleSerializer,
     ArticleCreateUpdateSerializer,
     ArticleImageSerializer,
@@ -51,10 +52,19 @@ class AuthorViewSet(
 
 
 class CategoryViewSet(ModelViewSet):
-    queryset = Category.objects.annotate(articles_count=Count("articles")).all()
+    queryset = (
+        Category.objects.annotate(articles_count=Count("articles"))
+        .prefetch_related("children")
+        .all()
+    )
     serializer_class = CategorySerializer
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            self.serializer_class = CategoryCreateSerializer
+        return super().get_serializer_class()
 
 
 class ArticleViewSet(ModelViewSet):
