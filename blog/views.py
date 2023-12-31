@@ -27,6 +27,7 @@ from .serializers import (
 )
 from .permissions import IsOwnerOrReadOnly, IsAdminOrReadOnly
 from .pagination import DefaultLimitOffsetPagination
+from .utils import HierarchyBuilder
 
 
 class AuthorViewSet(
@@ -51,10 +52,22 @@ class AuthorViewSet(
 
 
 class CategoryViewSet(ModelViewSet):
-    queryset = Category.objects.annotate(articles_count=Count("articles")).all()
+    queryset = (
+        Category.objects.annotate(articles_count=Count("articles"))
+        .prefetch_related("children")
+        .all()
+    )
     serializer_class = CategorySerializer
     pagination_class = DefaultLimitOffsetPagination
     permission_classes = [IsAdminOrReadOnly]
+
+    @action(methods=["GET"], detail=False)
+    def hierarchical(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        builder = HierarchyBuilder()
+        hierarchical_categories = builder.build(serializer.data)
+        return Response(hierarchical_categories, status=status.HTTP_200_OK)
 
 
 class ArticleViewSet(ModelViewSet):
