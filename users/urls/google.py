@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import GoogleLoginRedirectApi, GoogleLoginApi
+from users.views import GoogleLoginRedirectApi, GoogleLoginApi
 
 urlpatterns = [
     path("google/redirect/", GoogleLoginRedirectApi.as_view(), name="google-redirect"),
