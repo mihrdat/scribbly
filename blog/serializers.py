@@ -40,7 +40,16 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["id", "title", "heading", "slug", "articles_count", "parent"]
+        fields = [
+            "id",
+            "title",
+            "heading",
+            "slug",
+            "articles_count",
+            "parent",
+            "children",
+        ]
+        read_only_fields = ["slug", "articles_count", "children"]
 
     def get_slug(self, category):
         return slugify(category.title)
