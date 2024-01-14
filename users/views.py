@@ -77,7 +77,7 @@ class UserViewSet(ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = User.objects.get(email=serializer.validated_data["email"])
+        user = serializer.user
         context = {"user": user}
 
         PasswordResetEmail(request, context).send(to=[user.email])
