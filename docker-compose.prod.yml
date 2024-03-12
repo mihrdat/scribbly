@@ -36,26 +36,6 @@ services:
     volumes:
       - redis-data:/data
 
-  celery:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    command: celery -A config worker --loglevel=info
-    depends_on:
-      - redis
-    volumes:
-      - .:/app
-
-  celery-beat:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
-    command: celery -A config beat --loglevel=info
-    depends_on:
-      - redis
-    volumes:
-      - .:/app
-
 volumes:
   postgres-data:
   redis-data:
