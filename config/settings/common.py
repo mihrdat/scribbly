@@ -2,12 +2,9 @@ import os
 import dj_database_url
 
 from pathlib import Path
-from dotenv import load_dotenv
 
 from config.email import *
 from config.auth.google import *
-
-load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
