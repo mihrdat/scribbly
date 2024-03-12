@@ -11,7 +11,7 @@ services:
     environment:
       - DEBUG=${DEBUG}
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
-      - ALLOWED_HOST=${ALLOWED_HOST}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
     volumes:
       - .:/app
     depends_on:
