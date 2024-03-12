@@ -4,7 +4,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from config.minio import *
 from config.email import *
 from config.auth.google import *
 
@@ -15,7 +14,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 INSTALLED_APPS = [
-    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -25,12 +23,10 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
-    "minio_storage",
     "django_filters",
     "drf_spectacular",
     "users",
     "blog",
-    "chat",
 ]
 
 MIDDLEWARE = [
@@ -63,7 +59,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.app"
-ASGI_APPLICATION = "config.asgi.app"
 
 DATABASES = {
     "default": dj_database_url.config(env="DATABASE_URL"),
@@ -95,10 +90,10 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-MEDIA_URL = "media/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
-STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
