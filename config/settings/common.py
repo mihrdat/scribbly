@@ -15,7 +15,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 INSTALLED_APPS = [
-    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -30,7 +29,6 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "users",
     "blog",
-    "chat",
 ]
 
 MIDDLEWARE = [
@@ -63,7 +61,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.app"
-ASGI_APPLICATION = "config.asgi.app"
 
 DATABASES = {
     "default": dj_database_url.config(env="DATABASE_URL"),
