@@ -1,7 +1,7 @@
 import os
 import dj_database_url
-from pathlib import Path
 
+from pathlib import Path
 from dotenv import load_dotenv
 
 from config.email import *
@@ -117,8 +117,6 @@ CACHES = {
     }
 }
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
-
 # Swagger
 SPECTACULAR_SETTINGS = {
     "TITLE": "scribbly API",
@@ -129,21 +127,3 @@ SPECTACULAR_SETTINGS = {
 BASE_BACKEND_URL = os.environ.get("BASE_BACKEND_URL")
 
 RESET_PASSWORD_CONFIRM_URL = os.environ.get("RESET_PASSWORD_CONFIRM_URL")
-
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
-    },
-}
-
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [
-#                 ("localhost", 6379),
-#             ],
-#         },
-#     },
-# }
