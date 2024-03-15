@@ -8,7 +8,14 @@ RUN pip install --upgrade pip
 WORKDIR /app
 
 COPY /requirements/common.txt /requirements/prod.txt /requirements/
+COPY /scripts /scripts
 
-RUN pip install -r /requirements/prod.txt
+RUN pip install -r /requirements/prod.txt \
+    && adduser --disabled-password --no-create-home appuser \
+    && mkdir -p /static /media \
+    && chown -R appuser /static /media \
+    && chmod -R 755 /static /media
 
 COPY . /app
+
+CMD ["/scripts/docker-entrypoint.sh"]

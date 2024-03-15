@@ -9,7 +9,6 @@ services:
     ports:
       - 8000:8000
     environment:
-      - DEBUG=${DEBUG}
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DATABASE_URL=${DATABASE_URL}
@@ -28,10 +27,12 @@ services:
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
     volumes:
-      - .:/app
+      - static-data:/app/static
+      - media-data:/app/media
     depends_on:
       - db
       - redis
+    restart: always
 
   db:
     image: postgres:16.1
@@ -43,6 +44,7 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    restart: always
 
   redis:
     image: redis:7.2.4
@@ -51,6 +53,21 @@ services:
     volumes:
       - redis-data:/data
 
+  proxy:
+    build:
+      context: ./proxy
+      dockerfile: Dockerfile
+    ports:
+      - 80:80
+    volumes:
+      - static-data:/app/static
+      - media-data:/app/media
+    depends_on:
+      - api
+    restart: always
+
 volumes:
   postgres-data:
   redis-data:
+  static-data:
+  media-data:
