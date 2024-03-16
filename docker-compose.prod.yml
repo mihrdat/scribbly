@@ -28,6 +28,9 @@ services:
       - EMAIL_PORT=${EMAIL_PORT}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    volumes:
+      - static-data:/app/static
+      - media-data:/app/media
     depends_on:
       - db
       - redis
@@ -54,18 +57,17 @@ services:
     restart: always
 
   nginx:
-    build:
-      context: ./nginx
+    build: ./nginx
     command: ./docker-entrypoint.sh
     ports:
       - 80:80
     environment:
       - LISTEN_PORT=${LISTEN_PORT}
-      - API_HOST=${API_HOST}
-      - API_PORT=${API_PORT}
+      - UPSTREAM_HOST=${UPSTREAM_HOST}
+      - UPSTREAM_PORT=${UPSTREAM_PORT}
     volumes:
-      - static-data:/app/static
-      - media-data:/app/media
+      - static-data:/static
+      - media-data:/media
     depends_on:
       - api
     restart: always

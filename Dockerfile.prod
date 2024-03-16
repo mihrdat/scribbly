@@ -6,12 +6,9 @@ WORKDIR /app
 
 COPY /requirements/common.txt /requirements/prod.txt /requirements/
 
-RUN pip install --no-cache-dir -r /requirements/prod.txt \
-    && adduser --disabled-password --no-create-home appuser \
-    && mkdir -p /static /media \
-    && chown -R appuser /static /media \
-    && chmod -R 755 /static /media
+RUN pip install --no-cache-dir -r /requirements/prod.txt
 
 COPY . /app
 
-USER appuser
+RUN chmod +x /app/docker-entrypoint.prod.sh && \
+    chmod +x /app/wait-for-it.sh

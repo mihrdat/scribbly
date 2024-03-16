@@ -1,12 +1,9 @@
-FROM nginxinc/nginx-unprivileged:1-alpine
+FROM nginxinc/nginxinc/nginx-unprivileged:1-alpine
 
-COPY ./default.conf.tpl /etc/nginx/default.conf.tpl
+COPY . /
 
 USER root
 
-RUN mkdir -p /static /media \
-    && chmod -R 755 /static /media \
-    && touch /etc/nginx/conf.d/default.conf \
-    && chown nginx:nginx /etc/nginx/conf.d/default.conf
+RUN chmod +x /docker-entrypoint.sh
 
 USER nginx

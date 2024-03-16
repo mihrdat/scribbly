@@ -3,9 +3,9 @@
 echo "+---------------------------------------+"
 echo "| Substituting environment variables... |"
 echo "+---------------------------------------+"
-envsubst < /etc/nginx/default.conf.tpl > /etc/nginx/conf.d/default.conf
+envsubst '\$LISTEN_PORT \$UPSTREAM_HOST \$UPSTREAM_PORT' < /nginx.conf > /etc/nginx/conf.d/default.conf
 
-echo "+------------------+"
-echo "| Starting nginx...|"
-echo "+------------------+"
+echo "+-------------------+"
+echo "| Starting nginx... |"
+echo "+-------------------+"
 nginx -g 'daemon off;'
