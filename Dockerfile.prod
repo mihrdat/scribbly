@@ -1,16 +1,12 @@
 FROM python:3.9.15
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
 RUN pip install --upgrade pip
 
 WORKDIR /app
 
 COPY /requirements/common.txt /requirements/prod.txt /requirements/
-COPY /scripts /scripts
 
-RUN pip install -r /requirements/prod.txt \
+RUN pip install --no-cache-dir -r /requirements/prod.txt \
     && adduser --disabled-password --no-create-home appuser \
     && mkdir -p /static /media \
     && chown -R appuser /static /media \
@@ -18,4 +14,4 @@ RUN pip install -r /requirements/prod.txt \
 
 COPY . /app
 
-CMD ["/scripts/docker-entrypoint.sh"]
+USER appuser

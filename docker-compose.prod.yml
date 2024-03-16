@@ -9,6 +9,8 @@ services:
     ports:
       - 8000:8000
     environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
       - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS}
       - DATABASE_URL=${DATABASE_URL}
@@ -26,9 +28,6 @@ services:
       - EMAIL_PORT=${EMAIL_PORT}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-    volumes:
-      - static-data:/app/static
-      - media-data:/app/media
     depends_on:
       - db
       - redis
@@ -52,13 +51,18 @@ services:
       - 6379:6379
     volumes:
       - redis-data:/data
+    restart: always
 
-  proxy:
+  nginx:
     build:
-      context: ./proxy
-      dockerfile: Dockerfile
+      context: ./nginx
+    command: ./docker-entrypoint.sh
     ports:
       - 80:80
+    environment:
+      - LISTEN_PORT=${LISTEN_PORT}
+      - API_HOST=${API_HOST}
+      - API_PORT=${API_PORT}
     volumes:
       - static-data:/app/static
       - media-data:/app/media
