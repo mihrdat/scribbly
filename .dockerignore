@@ -24,3 +24,4 @@ celerybeat-schedule
 Dockerfile*
 docker-compose*
 /docker
+/nginx
