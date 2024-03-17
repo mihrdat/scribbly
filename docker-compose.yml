@@ -17,8 +17,6 @@ services:
 
   db:
     image: postgres:16-alpine3.19
-    ports:
-      - 5432:5432
     environment:
       - POSTGRES_DB=scribbly
       - POSTGRES_HOST_AUTH_METHOD=trust
@@ -27,8 +25,6 @@ services:
 
   redis:
     image: redis:7.2.4-alpine3.19
-    ports:
-      - 6379:6379
     volumes:
       - redis-data:/data
 
