@@ -1,4 +1,4 @@
-FROM python:alpine3.19
+FROM python:3.9.15
 
 RUN pip install --upgrade pip
 
@@ -10,8 +10,5 @@ RUN pip install -r /requirements/dev.txt
 
 COPY . /app
 
-RUN adduser --disabled-password --no-create-home appuser && \
-    chmod +x /app/docker-entrypoint.sh && \
+RUN chmod +x /app/docker-entrypoint.sh && \
     chmod +x /app/wait-for-it.sh
-
-USER appuser
