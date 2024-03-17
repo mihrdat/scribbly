@@ -1,4 +1,4 @@
-FROM nginxinc/nginxinc/nginx-unprivileged:1-alpine
+FROM nginxinc/nginx-unprivileged:1.24
 
 COPY . /
 
