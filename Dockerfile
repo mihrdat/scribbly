@@ -4,9 +4,9 @@ RUN pip install --upgrade pip
 
 WORKDIR /app
 
-COPY /requirements/common.txt /requirements/prod.txt /requirements/
+COPY /requirements/common.txt /requirements/dev.txt /requirements/
 
-RUN pip install --no-cache-dir -r /requirements/prod.txt
+RUN pip install -r /requirements/dev.txt
 
 COPY . /app
 
