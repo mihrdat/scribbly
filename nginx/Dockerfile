@@ -4,6 +4,6 @@ COPY . /
 
 USER root
 
-RUN chmod +x /docker-entrypoint.sh
+RUN chmod +x /nginx-entrypoint.sh
 
 USER nginx
