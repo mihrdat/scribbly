@@ -5,6 +5,7 @@ from pathlib import Path
 
 from config.email import *
 from config.auth.google import *
+from config.minio import *
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -21,6 +22,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "rest_framework_simplejwt",
     "corsheaders",
+    "minio_storage",
     "django_filters",
     "drf_spectacular",
     "users",
@@ -88,10 +90,10 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-
 MEDIA_URL = "media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
+STATICFILES_STORAGE = "minio_storage.storage.MinioStaticStorage"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

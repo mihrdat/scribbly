@@ -24,9 +24,6 @@ services:
       - EMAIL_PORT=${EMAIL_PORT}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
-    volumes:
-      - static-data:/app/static
-      - media-data:/app/media
     depends_on:
       - db
       - redis
@@ -57,15 +54,21 @@ services:
       - LISTEN_PORT=${LISTEN_PORT}
       - UPSTREAM_HOST=${UPSTREAM_HOST}
       - UPSTREAM_PORT=${UPSTREAM_PORT}
-    volumes:
-      - static-data:/static
-      - media-data:/media
     depends_on:
       - api
+    restart: always
+
+  minio:
+    image: minio/minio
+    command: gateway azure
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+    volumes:
+      - minio-data:/data
     restart: always
 
 volumes:
   postgres-data:
   redis-data:
-  static-data:
-  media-data:
+  minio-data:

@@ -28,6 +28,16 @@ services:
     volumes:
       - redis-data:/data
 
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+    volumes:
+      - minio-data:/data
+    restart: always
+
 volumes:
   postgres-data:
   redis-data:
