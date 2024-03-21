@@ -9,6 +9,7 @@ urlpatterns = [
     path("auth/", include("users.urls")),
     path("auth/", include("users.urls.token")),
     path("auth/", include("users.urls.google")),
+    path("auth/", include("config.urls.jwt")),
     path("blog/", include("blog.urls")),
 ]
 
