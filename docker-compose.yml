@@ -2,8 +2,7 @@ version: "3.9"
 
 services:
   api:
-    build: .
-    command: ./docker-entrypoint.sh
+    image: mihrdatmahmoodpoor/scribbly
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
