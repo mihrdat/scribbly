@@ -31,6 +31,13 @@ services:
       - db
       - redis
     restart: always
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 
   db:
     image: postgres:16.1
