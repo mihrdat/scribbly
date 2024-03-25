@@ -56,8 +56,8 @@ services:
     restart: always
 
   nginx:
-    build: ./nginx
-    command: ./nginx-entrypoint.sh
+    image: nginxinc/nginx-unprivileged:1.24
+    command: ./nginx/nginx-entrypoint.sh
     ports:
       - 80:80
     environment:
