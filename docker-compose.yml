@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   api:
-    build: .
+    image: mihrdatmahmoodpoor/scribbly
     command: ./docker-entrypoint.sh
     environment:
       - PYTHONDONTWRITEBYTECODE=1
@@ -31,6 +31,13 @@ services:
       - db
       - redis
     restart: always
+    deploy:
+      replicas: 3
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
 
   db:
     image: postgres:16.1
