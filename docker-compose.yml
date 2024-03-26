@@ -24,6 +24,8 @@ services:
       - EMAIL_PORT=${EMAIL_PORT}
       - EMAIL_HOST_USER=${EMAIL_HOST_USER}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+
+      - SENTRY_DSN=${SENTRY_DSN}
     volumes:
       - static-data:/app/static
       - media-data:/app/media
