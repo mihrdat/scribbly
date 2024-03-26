@@ -1,5 +1,6 @@
 import os
 from .common import *
+from config.sentry import *
 
 DEBUG = False
 
