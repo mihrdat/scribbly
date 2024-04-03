@@ -24,5 +24,6 @@ class RoomViewSet(
         return super().get_queryset().filter(user=self.request.user)
 
     @action(methods=["GET"], detail=False)
-    def session(self, request, *args, **kwargs):
-        return render(request, "session.html")
+    def lobby(self, request, *args, **kwargs):
+        username = request.query_params.get("username", default="admin")
+        return render(request, "lobby.html", {"username": username})

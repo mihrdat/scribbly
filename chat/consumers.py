@@ -10,25 +10,25 @@ User = get_user_model()
 
 class ChatConsumer(WebsocketConsumer):
     def get_room_name(self, user, participant):
-        room_name = Room.objects.get_or_create(user=user, participant=participant).name
+        room, created = Room.objects.get_or_create(user=user, participant=participant)
 
         # Create a mutually room for participant if it doesn't exist
-        Room.objects.get_or_create(user=participant, participant=user, name=room_name)
+        Room.objects.get_or_create(user=participant, participant=user, name=room.name)
 
-        return room_name
+        return room.name
 
     def connect(self):
         user = self.scope["user"]
-        user_name = self.scope["url_route"]["kwargs"]["user_name"]
+        username = self.scope["url_route"]["kwargs"]["username"]
 
-        if user_name == "admin":
+        if username == "admin":
             # Randomly assign an admin to supervise
             admin = User.objects.filter(is_staff=True).order_by("?").first()
 
             self.room_group_name = self.get_room_name(user=user, participant=admin)
         else:
             try:
-                participant = User.objects.get(username=user_name)
+                participant = User.objects.get(username=username)
                 self.room_group_name = self.get_room_name(
                     user=user, participant=participant
                 )
@@ -45,7 +45,6 @@ class ChatConsumer(WebsocketConsumer):
             self.channel_name,
         )
         self.accept()
-        print(self.scope["user"])
         self.send(
             text_data=json.dumps(
                 {
