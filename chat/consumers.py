@@ -21,7 +21,7 @@ class ChatConsumer(WebsocketConsumer):
         user = self.scope["user"]
         user_name = self.scope["url_route"]["kwargs"]["user_name"]
 
-        if user_name is "admin":
+        if user_name == "admin":
             # Randomly assign an admin to supervise
             admin = User.objects.filter(is_staff=True).order_by("?").first()
 
