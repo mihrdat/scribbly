@@ -25,5 +25,5 @@ class RoomViewSet(
 
     @action(methods=["GET"], detail=False)
     def lobby(self, request, *args, **kwargs):
-        username = request.query_params.get("username", default="admin")
+        username = request.query_params.get("username", default="support")
         return render(request, "lobby.html", {"username": username})

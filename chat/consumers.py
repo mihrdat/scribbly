@@ -4,55 +4,52 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
 from .models import Room
+from .constants import Messages
 
 User = get_user_model()
 
 
 class ChatConsumer(WebsocketConsumer):
-    def get_room_name(self, user, participant):
-        room, created = Room.objects.get_or_create(user=user, participant=participant)
-
-        # Create a mutually room for participant if it doesn't exist
-        Room.objects.get_or_create(user=participant, participant=user, name=room.name)
-
-        return room.name
-
     def connect(self):
+        self.accept()
         user = self.scope["user"]
+
+        if not user.is_authenticated:
+            self.send_message("Error", Messages.ERROR_AUTHENTICATION_FAILED)
+            self.close()
+            return
+
         username = self.scope["url_route"]["kwargs"]["username"]
-
-        if username == "admin":
+        if username == "support":
             # Randomly assign an admin to supervise
-            admin = User.objects.filter(is_staff=True).order_by("?").first()
-
-            self.room_group_name = self.get_room_name(user=user, participant=admin)
+            self.room_group_name = self.get_room_name(
+                user=user, participant=self.get_random_admin()
+            )
         else:
             try:
-                participant = User.objects.get(username=username)
                 self.room_group_name = self.get_room_name(
-                    user=user, participant=participant
+                    user=user, participant=User.objects.get(username=username)
                 )
             except User.DoesNotExist:
-                self.send(
-                    text_data=json.dumps(
-                        {"error": "No user with the given username was found."}
-                    )
-                )
+                self.send_message("Error", Messages.ERROR_NO_USER_FOUND)
                 self.close()
+                return
 
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name,
             self.channel_name,
         )
-        self.accept()
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "connection_established.",
-                    "message": "You are now connected",
-                }
-            )
-        )
+        self.send_message("Connected", Messages.CONNECTION_SUCCESS_MESSAGE)
+
+    def get_room_name(self, user, participant):
+        (room, created) = Room.objects.get_or_create(user=user, participant=participant)
+        return room.name
+
+    def get_random_admin(self):
+        return User.objects.filter(is_staff=True).order_by("?").first()
+
+    def send_message(self, type, message):
+        self.send(text_data=json.dumps({"type": type, "message": message}))
 
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
