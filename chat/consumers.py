@@ -67,11 +67,6 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name, {"type": "chat_message", "message": message}
         )
 
-        Message.objects.create(
-            content=message, user=self.scope["user"], recipient=self.participant
-        )
-
-    def chat_message(self, event):
         user = self.scope["user"]
         Room.objects.get_or_create(
             user=user,
@@ -84,5 +79,10 @@ class ChatConsumer(WebsocketConsumer):
             defaults={"name": self.room_group_name},
         )
 
+        Message.objects.create(
+            content=message, user=self.scope["user"], recipient=self.participant
+        )
+
+    def chat_message(self, event):
         message = event["message"]
-        self.send(text_data=json.dumps({"type": "chat", "message": message}))
+        self.send_message("chat", message)
