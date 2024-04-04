@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
-from .models import Room
+from .models import Room, Message
 from .constants import Messages
 from .utils import generate_random_room_name
 
@@ -51,7 +51,6 @@ class ChatConsumer(WebsocketConsumer):
             return
 
         self.assign_participant()
-
         self.assign_room()
 
         async_to_sync(self.channel_layer.group_add)(
@@ -65,11 +64,11 @@ class ChatConsumer(WebsocketConsumer):
         message = text_data_json["message"]
 
         async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                "type": "chat_message",
-                "message": message,
-            },
+            self.room_group_name, {"type": "chat_message", "message": message}
+        )
+
+        Message.objects.create(
+            content=message, user=self.scope["user"], recipient=self.participant
         )
 
     def chat_message(self, event):
@@ -79,7 +78,6 @@ class ChatConsumer(WebsocketConsumer):
             participant=self.participant,
             defaults={"name": self.room_group_name},
         )
-
         Room.objects.get_or_create(
             user=self.participant,
             participant=user,
@@ -87,11 +85,4 @@ class ChatConsumer(WebsocketConsumer):
         )
 
         message = event["message"]
-        self.send(
-            text_data=json.dumps(
-                {
-                    "type": "chat",
-                    "message": message,
-                }
-            )
-        )
+        self.send(text_data=json.dumps({"type": "chat", "message": message}))
