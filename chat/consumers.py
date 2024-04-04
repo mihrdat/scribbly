@@ -12,38 +12,6 @@ User = get_user_model()
 
 
 class ChatConsumer(WebsocketConsumer):
-    def authenticate_user(self):
-        user = self.scope["user"]
-        if not user.is_authenticated:
-            self.send_message("error", Messages.ERROR_AUTHENTICATION_FAILED)
-            self.close()
-            return False
-        return True
-
-    def assign_participant(self):
-        username = self.scope["url_route"]["kwargs"]["username"]
-        self.participant = User.objects.filter(username=username).first()
-        if (username != "support") and (not self.participant):
-            self.send_message("error", Messages.ERROR_NO_USER_FOUND)
-            self.close()
-            return
-        elif username == "support":
-            self.participant = self.get_random_admin()
-
-    def assign_room(self):
-        user = self.scope["user"]
-        room = Room.objects.filter(
-            (Q(user=user) & Q(participant=self.participant))
-            | (Q(user=self.participant) & Q(participant=user))
-        ).first()
-        self.room_group_name = room.name if room else generate_random_room_name()
-
-    def get_random_admin(self):
-        return User.objects.filter(is_staff=True).order_by("?").first()
-
-    def send_message(self, type, message):
-        self.send(text_data=json.dumps({"type": type, "message": message}))
-
     def connect(self):
         self.accept()
 
@@ -79,10 +47,40 @@ class ChatConsumer(WebsocketConsumer):
             defaults={"name": self.room_group_name},
         )
 
-        Message.objects.create(
-            content=message, user=self.scope["user"], recipient=self.participant
-        )
+        Message.objects.create(content=message, user=user, recipient=self.participant)
 
     def chat_message(self, event):
         message = event["message"]
         self.send_message("chat", message)
+
+    def authenticate_user(self):
+        user = self.scope["user"]
+        if not user.is_authenticated:
+            self.send_message("error", Messages.ERROR_AUTHENTICATION_FAILED)
+            self.close()
+            return False
+        return True
+
+    def assign_participant(self):
+        username = self.scope["url_route"]["kwargs"]["username"]
+        self.participant = User.objects.filter(username=username).first()
+        if (username != "support") and (not self.participant):
+            self.send_message("error", Messages.ERROR_NO_USER_FOUND)
+            self.close()
+            return
+        elif username == "support":
+            self.participant = self.get_random_admin()
+
+    def assign_room(self):
+        user = self.scope["user"]
+        room = Room.objects.filter(
+            (Q(user=user) & Q(participant=self.participant))
+            | (Q(user=self.participant) & Q(participant=user))
+        ).first()
+        self.room_group_name = room.name if room else generate_random_room_name()
+
+    def get_random_admin(self):
+        return User.objects.filter(is_staff=True).order_by("?").first()
+
+    def send_message(self, type, message):
+        self.send(text_data=json.dumps({"type": type, "message": message}))
