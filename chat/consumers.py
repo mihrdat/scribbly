@@ -25,14 +25,22 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name,
         )
-        self.send_message("connection_established", Messages.CONNECTION_SUCCESS_MESSAGE)
+
+        self.send(
+            json.dumps(
+                {
+                    "type": "connection_established",
+                    "detail": Messages.CONNECTION_SUCCESS_MESSAGE,
+                }
+            )
+        )
 
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
 
         async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, {"type": "chat_message", "message": message}
+            self.room_group_name, {"type": "chat_message", "detail": message}
         )
 
         user = self.scope["user"]
@@ -51,12 +59,16 @@ class ChatConsumer(WebsocketConsumer):
 
     def chat_message(self, event):
         message = event["message"]
-        self.send_message("chat", message)
+        self.send(json.dumps({"type": "chat", "detail": message}))
 
     def authenticate_user(self):
         user = self.scope["user"]
         if not user.is_authenticated:
-            self.send_message("error", Messages.ERROR_AUTHENTICATION_FAILED)
+            self.send(
+                json.dumps(
+                    {"type": "error", "detail": Messages.ERROR_AUTHENTICATION_FAILED}
+                )
+            )
             self.close()
             return False
         return True
@@ -65,7 +77,9 @@ class ChatConsumer(WebsocketConsumer):
         username = self.scope["url_route"]["kwargs"]["username"]
         self.participant = User.objects.filter(username=username).first()
         if (username != "support") and (not self.participant):
-            self.send_message("error", Messages.ERROR_NO_USER_FOUND)
+            self.send(
+                json.dumps({"type": "error", "detail": Messages.ERROR_NO_USER_FOUND})
+            )
             self.close()
             return
         elif username == "support":
@@ -82,5 +96,13 @@ class ChatConsumer(WebsocketConsumer):
     def get_random_admin(self):
         return User.objects.filter(is_staff=True).order_by("?").first()
 
-    def send_message(self, type, message):
-        self.send(text_data=json.dumps({"type": type, "message": message}))
+    def get_messages(self, user, participant):
+        return [
+            (message.user.username, message.content)
+            for message in Message.objects.select_related("user")
+            .filter(
+                Q(user=user, recipient=participant)
+                | Q(user=participant, recipient=user)
+            )
+            .order_by("created_at")
+        ]
