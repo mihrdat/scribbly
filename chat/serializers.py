@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 
 from rest_framework import serializers
 
-from .models import Room, Message
+from .models import Room
 
 User = get_user_model()
 
@@ -14,12 +14,8 @@ class SimpleUserSerializer(serializers.ModelSerializer):
 
 
 class RoomSerializer(serializers.ModelSerializer):
+    participant = SimpleUserSerializer()
+
     class Meta:
         fields = ["id", "participant", "created_at"]
         model = Room
-
-
-class MessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ["id", "content", "user", "recipient", "created_at"]
-        model = Message

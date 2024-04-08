@@ -13,7 +13,7 @@ class Room(models.Model):
 
 class Message(models.Model):
     content = models.TextField()
-    user = models.ForeignKey(
+    sender = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="sent_messages"
     )
     recipient = models.ForeignKey(
