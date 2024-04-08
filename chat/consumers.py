@@ -1,7 +1,9 @@
 import json
 
+from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
@@ -47,9 +49,18 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name, self.channel_name
         )
 
+        participant_avatar = self.participant.author.avatar
         detail = {
             "type": "connection_established",
             "message": Messages.CONNECTION_SUCCESS_MESSAGE,
+            "participant": {
+                "username": self.participant.username,
+                "avatar": (
+                    settings.BASE_BACKEND_URL + str(participant_avatar.url)
+                    if participant_avatar
+                    else None
+                ),
+            },
             "history": [
                 {
                     "sender_id": message.sender_id,
@@ -86,7 +97,7 @@ class ChatConsumer(WebsocketConsumer):
         return User.objects.filter(is_staff=True).order_by("?").first()
 
     def get_participant(self, pk):
-        return User.objects.get(pk=pk)
+        return User.objects.select_related("author").get(pk=pk)
 
     def get_shared_room_name(self, user, participant):
         room = Room.objects.filter(
