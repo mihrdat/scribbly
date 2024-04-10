@@ -1,7 +1,9 @@
 import json
 
+from django.conf import settings
 from django.db.models import Q
 from django.contrib.auth import get_user_model
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
 
@@ -47,9 +49,18 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name, self.channel_name
         )
 
+        participant_avatar = self.participant.author.avatar
         detail = {
             "type": "connection_established",
             "message": Messages.CONNECTION_SUCCESS_MESSAGE,
+            "participant": {
+                "username": self.participant.username,
+                "avatar": (
+                    settings.BASE_BACKEND_URL + str(participant_avatar.url)
+                    if participant_avatar
+                    else None
+                ),
+            },
             "history": [
                 {
                     "sender_id": message.sender_id,
@@ -63,22 +74,32 @@ class ChatConsumer(WebsocketConsumer):
 
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
-
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name, {"type": "chat_message", "message": message}
-        )
+        content = text_data_json["content"]
 
         user = self.scope["user"]
+        message = Message.objects.create(
+            content=content, sender=user, recipient=self.participant
+        )
+
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                "type": "chat_message",
+                "content": content,
+                "sender_id": self.scope["user"].id,
+                "created_at": message.created_at.isoformat(),
+            },
+        )
+
         self.create_room_with_shared_name(user, self.participant, self.room_group_name)
         self.create_room_with_shared_name(self.participant, user, self.room_group_name)
-
-        Message.objects.create(content=message, sender=user, recipient=self.participant)
 
     def chat_message(self, event):
         detail = {
             "type": "chat",
-            "message": event["message"],
+            "content": event["content"],
+            "sender_id": event["sender_id"],
+            "created_at": event["created_at"],
         }
         self.send(json.dumps(detail))
 
@@ -86,7 +107,7 @@ class ChatConsumer(WebsocketConsumer):
         return User.objects.filter(is_staff=True).order_by("?").first()
 
     def get_participant(self, pk):
-        return User.objects.get(pk=pk)
+        return User.objects.select_related("author").get(pk=pk)
 
     def get_shared_room_name(self, user, participant):
         room = Room.objects.filter(
