@@ -9,7 +9,6 @@ from channels.generic.websocket import WebsocketConsumer
 
 from .models import Room, Message
 from .constants import Messages
-from .utils import generate_random_room_name
 
 User = get_user_model()
 
@@ -43,7 +42,7 @@ class ChatConsumer(WebsocketConsumer):
                 self.close()
                 return
 
-        self.room_group_name = self.get_shared_room_name(user, self.participant)
+        self.room_group_name = self.get_room_name(user.pk, self.participant.pk)
 
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
@@ -75,8 +74,11 @@ class ChatConsumer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         text_data_json = json.loads(text_data)
         content = text_data_json["content"]
-
         user = self.scope["user"]
+
+        self.create_room_if_not_exists(user, self.participant)
+        self.create_room_if_not_exists(self.participant, user)
+
         message = Message.objects.create(
             content=content, sender=user, recipient=self.participant
         )
@@ -91,9 +93,6 @@ class ChatConsumer(WebsocketConsumer):
             },
         )
 
-        self.create_room_with_shared_name(user, self.participant, self.room_group_name)
-        self.create_room_with_shared_name(self.participant, user, self.room_group_name)
-
     def chat_message(self, event):
         detail = {
             "type": "chat",
@@ -103,18 +102,15 @@ class ChatConsumer(WebsocketConsumer):
         }
         self.send(json.dumps(detail))
 
+    def get_room_name(self, user_id, participant_id):
+        sorted_ids = sorted([user_id, participant_id])
+        return f"Room-{sorted_ids[0]}-{sorted_ids[1]}"
+
     def get_random_admin(self):
         return User.objects.filter(is_staff=True).order_by("?").first()
 
     def get_participant(self, pk):
         return User.objects.select_related("author").get(pk=pk)
-
-    def get_shared_room_name(self, user, participant):
-        room = Room.objects.filter(
-            Q(user=user, participant=participant)
-            | Q(user=participant, participant=user)
-        ).first()
-        return room.name if room else generate_random_room_name()
 
     def get_history(self, user, participant):
         try:
@@ -130,6 +126,6 @@ class ChatConsumer(WebsocketConsumer):
         except Room.DoesNotExist:
             return []
 
-    def create_room_with_shared_name(self, user, participant, name):
+    def create_room_if_not_exists(self, user, participant):
         if not Room.objects.filter(user=user, participant=participant).exists():
-            Room.objects.create(name=name, user=user, participant=participant)
+            Room.objects.create(user=user, participant=participant)
