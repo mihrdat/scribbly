@@ -18,28 +18,22 @@ class ChatConsumer(WebsocketConsumer):
         self.accept()
 
         user = self.scope["user"]
+        participant_id = self.scope["url_route"]["kwargs"]["participant_id"]
+
         if not user.is_authenticated:
-            detail = {
-                "type": "error",
-                "message": Messages.ERROR_AUTHENTICATION_FAILED,
-            }
-            self.send(json.dumps(detail))
-            self.close()
+            self.send_error(Messages.ERROR_UNAUTHENTICATED)
+            return
+        elif user.pk == participant_id:
+            self.send_error(Messages.ERROR_SELF_CHAT)
             return
 
-        participant_id = self.scope["url_route"]["kwargs"]["participant_id"]
         if participant_id == 0:
             self.participant = self.get_random_admin()
         else:
             try:
                 self.participant = self.get_participant(participant_id)
             except User.DoesNotExist:
-                detail = {
-                    "type": "error",
-                    "message": Messages.ERROR_NO_USER_FOUND,
-                }
-                self.send(json.dumps(detail))
-                self.close()
+                self.send_error(Messages.ERROR_NO_USER_FOUND)
                 return
 
         self.room_group_name = self.get_room_name(user.pk, self.participant.pk)
@@ -47,6 +41,14 @@ class ChatConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_add)(
             self.room_group_name, self.channel_name
         )
+
+        self.user_room = Room.objects.filter(
+            user=user, participant=self.participant
+        ).first()
+
+        self.participant_room = Room.objects.filter(
+            user=self.participant, participant=user
+        ).first()
 
         participant_avatar = self.participant.author.avatar
         detail = {
@@ -76,8 +78,14 @@ class ChatConsumer(WebsocketConsumer):
         content = text_data_json["content"]
         user = self.scope["user"]
 
-        self.create_room_if_not_exists(user, self.participant)
-        self.create_room_if_not_exists(self.participant, user)
+        if not self.user_room:
+            self.user_room = Room.objects.create(
+                user=user, participant=self.participant
+            )
+        if not self.participant_room:
+            self.participant_room = Room.objects.create(
+                user=self.participant, participant=user
+            )
 
         message = Message.objects.create(
             content=content, sender=user, recipient=self.participant
@@ -113,19 +121,18 @@ class ChatConsumer(WebsocketConsumer):
         return User.objects.select_related("author").get(pk=pk)
 
     def get_history(self, user, participant):
-        try:
-            room = Room.objects.get(user=user, participant=participant)
+        if self.user_room:
             return (
                 Message.objects.filter(
                     Q(sender=user, recipient=participant)
                     | Q(sender=participant, recipient=user)
                 )
-                .filter(created_at__gte=room.created_at)
+                .filter(created_at__gte=self.user_room.created_at)
                 .order_by("created_at")
             )
-        except Room.DoesNotExist:
-            return []
+        return []
 
-    def create_room_if_not_exists(self, user, participant):
-        if not Room.objects.filter(user=user, participant=participant).exists():
-            Room.objects.create(user=user, participant=participant)
+    def send_error(self, message):
+        detail = {"type": "error", "message": message}
+        self.send(json.dumps(detail))
+        self.close()
