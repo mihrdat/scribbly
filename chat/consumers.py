@@ -114,11 +114,10 @@ class ChatConsumer(WebsocketConsumer):
         sorted_ids = sorted([user_id, participant_id])
         return f"Room-{sorted_ids[0]}-{sorted_ids[1]}"
 
-    def get_random_admin(self):
-        return User.objects.filter(is_staff=True).order_by("?").first()
-
-    def get_participant(self, pk):
-        return User.objects.select_related("author").get(pk=pk)
+    def send_error(self, message):
+        detail = {"type": "error", "message": message}
+        self.send(json.dumps(detail))
+        self.close()
 
     def get_history(self, user, participant):
         if self.user_room:
@@ -132,7 +131,8 @@ class ChatConsumer(WebsocketConsumer):
             )
         return []
 
-    def send_error(self, message):
-        detail = {"type": "error", "message": message}
-        self.send(json.dumps(detail))
-        self.close()
+    def get_random_admin(self):
+        return User.objects.filter(is_staff=True).order_by("?").first()
+
+    def get_participant(self, pk):
+        return User.objects.select_related("author").get(pk=pk)
