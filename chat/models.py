@@ -6,7 +6,7 @@ User = get_user_model()
 
 class Room(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="rooms")
-    participant = models.ForeignKey(User, on_delete=models.CASCADE)
+    contact = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
 
