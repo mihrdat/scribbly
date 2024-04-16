@@ -1,7 +1,6 @@
-from rest_framework_nested import routers
-from .views import RoomViewSet
+from django.urls import path
+from . import views
 
-router = routers.DefaultRouter()
-router.register("rooms", RoomViewSet)
-
-urlpatterns = router.urls
+urlpatterns = [
+    path("lobby/", views.lobby, name="lobby"),
+]

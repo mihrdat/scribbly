@@ -49,7 +49,6 @@
         </div>
         <div class="flex flex-col">
           <h3 id="user-name" class="tracking-tight text-lg font-bold"></h3>
-          <div class="tracking-tight text-sm text-blue-400">online</div>
         </div>
       </div>
       <div class="p-4 flex-1 overflow-y-auto text-sm" id="messages"></div>
@@ -83,7 +82,7 @@
       const form = document.getElementById("form");
       const messagesContainer = document.getElementById("messages");
 
-      const socketUrl = `ws://${window.location.host}/ws/socket-server/{{participant_id}}/`;
+      const socketUrl = `ws://${window.location.host}/ws/socket-server/{{contact_id}}/`;
 
       const currentUser = await getCurrentUser();
       const chatSocket = new WebSocket(socketUrl);
@@ -94,7 +93,7 @@
 
         if (data.type === 'connection_established') {
           displayChatHistory(data.history, currentUser, messagesContainer);
-          displayUserDetails(data.participant);
+          displayUserDetails(data.contact);
         }
 
         if (data.type === "chat") {
