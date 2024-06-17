@@ -57,6 +57,7 @@ class ChatConsumer(WebsocketConsumer):
                     "content": message.content,
                     "sender_id": message.sender_id,
                     "created_at": message.created_at.isoformat(),
+                    "seen": message.seen,
                 }
                 for message in self.get_history(user, self.contact)
             ],
@@ -64,35 +65,57 @@ class ChatConsumer(WebsocketConsumer):
         self.send(json.dumps(detail))
 
     def receive(self, text_data=None, bytes_data=None):
-        text_data_json = json.loads(text_data)
-        content = text_data_json["content"]
         user = self.scope["user"]
+        text_data_json = json.loads(text_data)
 
-        if not self.user_room:
-            self.user_room = Room.objects.create(user=user, contact=self.contact)
-        if not self.contact_room:
-            self.contact_room = Room.objects.create(user=self.contact, contact=user)
+        content = text_data_json.get("content")
+        if content:
+            if not self.user_room:
+                self.user_room = Room.objects.create(user=user, contact=self.contact)
+            if not self.contact_room:
+                self.contact_room = Room.objects.create(user=self.contact, contact=user)
 
-        message = Message.objects.create(
-            content=content, sender=user, recipient=self.contact
-        )
+            message = Message.objects.create(
+                content=content, sender=user, recipient=self.contact
+            )
 
-        async_to_sync(self.channel_layer.group_send)(
-            self.room_group_name,
-            {
-                "type": "chat_message",
-                "content": content,
-                "sender_id": self.scope["user"].id,
-                "created_at": message.created_at.isoformat(),
-            },
-        )
+            async_to_sync(self.channel_layer.group_send)(
+                self.room_group_name,
+                {
+                    "type": "chat_message",
+                    "id": message.id,
+                    "content": content,
+                    "sender_id": self.scope["user"].id,
+                    "created_at": message.created_at.isoformat(),
+                },
+            )
+
+        seen_messages = text_data_json.get("seen_messages")
+        if seen_messages:
+            for message_id in seen_messages:
+                async_to_sync(self.channel_layer.group_send)(
+                    self.room_group_name,
+                    {
+                        "type": "message_seen",
+                        "message_id": message_id,
+                    },
+                )
+            Message.objects.filter(id__in=seen_messages).update(seen=True)
 
     def chat_message(self, event):
         detail = {
             "type": "chat",
+            "id": event["id"],
             "content": event["content"],
             "sender_id": event["sender_id"],
             "created_at": event["created_at"],
+        }
+        self.send(json.dumps(detail))
+
+    def message_seen(self, event):
+        detail = {
+            "type": "seen",
+            "message_id": event["message_id"],
         }
         self.send(json.dumps(detail))
 
