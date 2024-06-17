@@ -19,3 +19,4 @@ class Message(models.Model):
         User, on_delete=models.CASCADE, related_name="received_messages"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    seen = models.BooleanField(default=False)
