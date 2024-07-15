@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: ./docker-entrypoint.dev.sh
+    command: ./api-docker-entrypoint.dev.sh
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -24,21 +24,17 @@ services:
       - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
 
   redis:
     image: redis:7.2.4
     volumes:
       - redis-data:/data
-    ports:
-      - 6379:6379
 
   celery:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: ./celery-entrypoint.sh
+    command: ./celery-docker-entrypoint.sh
     environment:
       - PYTHONDONTWRITEBYTECODE=1
       - PYTHONUNBUFFERED=1
@@ -57,8 +53,7 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     ports:
-      - 15672:15672
-      - 5672:5672
+      - 15672:15672 # RabbitMQ management interface
 
 volumes:
   postgres-data:

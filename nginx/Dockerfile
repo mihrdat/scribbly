@@ -4,6 +4,4 @@ COPY . /
 
 USER root
 
-RUN chmod +x /nginx-entrypoint.sh
-
 USER nginx
