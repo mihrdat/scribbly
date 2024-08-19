@@ -2,6 +2,10 @@ secretGenerator:
   - name: db-password
     literals:
       - password=supersecretpasswordhere
+  - name: api
+    literals:
+      - secretkey=supersecretkeyhere
 resources:
   - postgres-deployment.yml
   - postgres-service.yml
+  - api-deployment.yml
