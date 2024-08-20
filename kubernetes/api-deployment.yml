@@ -30,6 +30,6 @@ spec:
             - name: DJANGO_SETTINGS_MODULE
               value: config.settings.prod
             - name: ALLOWED_HOSTS
-              value: 51.107.8.211|api.djosers.ir
+              value: api.djosers.ir
           ports:
             - containerPort: 8000
