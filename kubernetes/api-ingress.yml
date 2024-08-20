@@ -1,0 +1,12 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-api
+spec:
+  rules:
+    - host: api.djosers.ir
+      http:
+        paths:
+          - backend:
+              serviceName: api-service
+              servicePort: 8000
