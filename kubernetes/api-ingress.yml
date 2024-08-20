@@ -8,5 +8,7 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: api-service
-              servicePort: 8000
+              service:
+                name: api-service
+                port:
+                  number: 8000
