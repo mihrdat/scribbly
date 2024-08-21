@@ -1,10 +1,11 @@
 secretGenerator:
-  - name: db-password
+  - name: api-credentials
+    literals:
+      - secret-key=supersecretkeyhere
+      - database-url=postgres://postgres:supersecretpasswordhere@postgres:5432/scribbly
+  - name: db-credentials
     literals:
       - password=supersecretpasswordhere
-  - name: api
-    literals:
-      - secretkey=supersecretkeyhere
 resources:
   - postgres-deployment.yml
   - postgres-service.yml

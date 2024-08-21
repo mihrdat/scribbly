@@ -19,14 +19,13 @@ spec:
             - name: SECRET_KEY
               valueFrom:
                 secretKeyRef:
-                  name: api
-                  key: secretkey
+                  name: api-credentials
+                  key: secret-key
             - name: DATABASE_URL
-              value: postgres://postgres:<password>@postgres-service/scribbly
               valueFrom:
                 secretKeyRef:
-                  name: db-password
-                  key: password
+                  name: api-credentials
+                  key: database-url
             - name: DJANGO_SETTINGS_MODULE
               value: config.settings.prod
             - name: ALLOWED_HOSTS

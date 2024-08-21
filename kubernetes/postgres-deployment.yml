@@ -24,7 +24,7 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-password
+                  name: db-credentials
                   key: password
           ports:
             - containerPort: 5432
