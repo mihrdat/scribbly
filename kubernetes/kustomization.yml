@@ -10,5 +10,3 @@ resources:
   - postgres-service.yml
   - api-deployment.yml
   - api-service.yml
-  - api-ingress.yml
-  - nginx-controller-deployment.yml
