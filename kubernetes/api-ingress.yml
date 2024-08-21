@@ -1,16 +1,14 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: api-ingress
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
 spec:
-  ingressClassName: nginx
   rules:
     - host: api.djosers.ir
       http:
         paths:
           - path: /
+            pathType: Prefix
             backend:
               service:
                 name: api-service
