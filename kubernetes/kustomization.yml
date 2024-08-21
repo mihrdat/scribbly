@@ -12,4 +12,3 @@ resources:
   - api-service.yml
   - api-ingress.yml
   - nginx-controller-deployment.yml
-  - nginx-service.yml
