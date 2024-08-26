@@ -3,6 +3,6 @@ from celery import Celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
 
-celery = Celery("scribbly")
-celery.config_from_object("django.conf:settings", namespace="CELERY")
-celery.autodiscover_tasks()
+app = Celery("scribbly")
+app.config_from_object("django.conf:settings", namespace="CELERY")
+app.autodiscover_tasks()

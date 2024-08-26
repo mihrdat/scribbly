@@ -1,3 +1,0 @@
-# Ignore Docker build files and directories
-.dockerignore
-Dockerfile*

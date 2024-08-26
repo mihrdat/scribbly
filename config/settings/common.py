@@ -2,16 +2,20 @@ import os
 import dj_database_url
 
 from pathlib import Path
+from dotenv import load_dotenv
 
 from config.email import *
 from config.auth.google import *
+
+# Load environment variables from .env file
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
 
 INSTALLED_APPS = [
-    "daphne",
+    # "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -144,3 +148,4 @@ CHANNEL_LAYERS = {
 #         },
 #     },
 # }
+CELERY_BROKER_URL = os.environ.get("BROKER_URL")
