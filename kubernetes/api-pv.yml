@@ -4,7 +4,7 @@ metadata:
   name: static-pv
 spec:
   capacity:
-    storage: 1Gi
+    storage: 100Mi
   accessModes:
     - ReadWriteOnce
   hostPath:
@@ -17,7 +17,7 @@ metadata:
   name: media-pv
 spec:
   capacity:
-    storage: 1Gi
+    storage: 100Mi
   accessModes:
     - ReadWriteOnce
   hostPath:
