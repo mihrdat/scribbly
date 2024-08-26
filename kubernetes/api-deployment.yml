@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: mihrdatmahmoodpoor/scribbly:1.1.0
+          image: mihrdatmahmoodpoor/scribbly:1.1.1
           command: ["./docker-entrypoint.prod.sh"]
           env:
             - name: SECRET_KEY
@@ -32,3 +32,15 @@ spec:
               value: 51.107.8.211|api.djosers.ir
           ports:
             - containerPort: 8000
+          volumeMounts:
+            - name: static-files
+              mountPath: /app/static
+            - name: media-files
+              mountPath: /app/media
+      volumes:
+        - name: static-files
+          persistentVolumeClaim:
+            claimName: static-pvc
+        - name: media-files
+          persistentVolumeClaim:
+            claimName: media-pvc
