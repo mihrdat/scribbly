@@ -9,9 +9,11 @@ RUN pip install --no-cache-dir -r /requirements/prod.txt
 
 COPY . /app
 
-RUN groupadd -r appuser && useradd -r -g appuser appuser && \
-    mkdir -p /app/static /app/media && \
+RUN groupadd -r appuser && \
+    useradd -r -g appuser appuser && \
     chmod +x /app/docker-entrypoint.prod.sh /app/wait-for-it.sh && \
     chown -R appuser:appuser /app
 
 USER appuser
+
+ENTRYPOINT ["./docker-entrypoint.prod.sh"]

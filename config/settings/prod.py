@@ -4,7 +4,7 @@ from config.sentry import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split("|")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(",")
 
 REST_FRAMEWORK = {
     **REST_FRAMEWORK,
