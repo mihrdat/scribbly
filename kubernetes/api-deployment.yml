@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: mihrdatmahmoodpoor/scribbly:1.1.3
+          image: mihrdatmahmoodpoor/scribbly:1.1.6
           command: ["./docker-entrypoint.prod.sh"]
           env:
             - name: SECRET_KEY
@@ -39,8 +39,10 @@ spec:
               mountPath: /app/media
       volumes:
         - name: static-files
-          persistentVolumeClaim:
-            claimName: static-pvc
+          hostPath:
+            path: /mnt/data/static
+            type: DirectoryOrCreate
         - name: media-files
-          persistentVolumeClaim:
-            claimName: media-pvc
+          hostPath:
+            path: /mnt/data/media
+            type: DirectoryOrCreate
