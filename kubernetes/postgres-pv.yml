@@ -8,4 +8,5 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /mnt/data/postgres
+    path: /mnt/data/postgresql
+    type: DirectoryOrCreate

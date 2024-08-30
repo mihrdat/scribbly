@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: mihrdatmahmoodpoor/scribbly:1.1.3
+          image: mihrdatmahmoodpoor/scribbly:1.1.4
           command: ["./docker-entrypoint.prod.sh"]
           env:
             - name: SECRET_KEY
