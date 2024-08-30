@@ -15,5 +15,3 @@ RUN groupadd -r appuser && \
     chown -R appuser:appuser /app
 
 USER appuser
-
-ENTRYPOINT ["./docker-entrypoint.prod.sh"]
