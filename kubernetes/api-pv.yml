@@ -10,7 +10,7 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/data/static
-    type: DirectoryOrCreate
+  storageClassName: manual
 
 ---
 apiVersion: v1
@@ -25,4 +25,4 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/data/media
-    type: DirectoryOrCreate
+  storageClassName: manual

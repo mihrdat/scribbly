@@ -10,4 +10,4 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/data/postgres
-    type: DirectoryOrCreate
+  storageClassName: manual
