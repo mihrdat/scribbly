@@ -7,10 +7,12 @@ secretGenerator:
     literals:
       - password=123321
 resources:
+  - postgres-pv.yml
+  - postgres-pvc.yml
   - postgres-deployment.yml
   - postgres-service.yml
+  - api-pv.yml
+  - api-pvc.yml
   - api-deployment.yml
   - api-service.yml
   - api-ingress.yml
-  - api-pv.yml
-  - api-pvc.yml
