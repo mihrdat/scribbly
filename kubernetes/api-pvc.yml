@@ -8,6 +8,7 @@ spec:
   resources:
     requests:
       storage: 100Mi
+  volumeName: static-pv
 
 ---
 apiVersion: v1
@@ -20,3 +21,4 @@ spec:
   resources:
     requests:
       storage: 100Mi
+  volumeName: media-pv
