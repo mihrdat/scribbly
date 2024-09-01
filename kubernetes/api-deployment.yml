@@ -39,10 +39,8 @@ spec:
               mountPath: /app/media
       volumes:
         - name: static-files
-          hostPath:
-            path: /mnt/data/static
-            type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: static-pvc
         - name: media-files
-          hostPath:
-            path: /mnt/data/media
-            type: DirectoryOrCreate
+          persistentVolumeClaim:
+            claimName: media-pvc

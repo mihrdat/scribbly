@@ -25,3 +25,4 @@ Dockerfile*
 docker-compose*
 /docker
 /nginx
+/kubernetes
