@@ -8,6 +8,9 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/data/static
+    type: DirectoryOrCreate
 
 ---
 apiVersion: v1
@@ -20,3 +23,6 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/data/media
+    type: DirectoryOrCreate
