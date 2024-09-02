@@ -8,13 +8,9 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: microk8s-hostpath
-  claimRef:
-    namespace: default
-    name: static-pvc
   hostPath:
     path: /mnt/data/static
-    type: DirectoryOrCreate
+  storageClassName: manual
 
 ---
 apiVersion: v1
@@ -27,10 +23,6 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
-  storageClassName: microk8s-hostpath
-  claimRef:
-    namespace: default
-    name: media-pvc
   hostPath:
     path: /mnt/data/media
-    type: DirectoryOrCreate
+  storageClassName: manual
