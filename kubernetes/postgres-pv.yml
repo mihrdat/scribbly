@@ -8,6 +8,10 @@ spec:
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
+  storageClassName: microk8s-hostpath
+  claimRef:
+    namespace: default
+    name: postgres-pvc
   hostPath:
     path: /mnt/data/postgres
-  storageClassName: manual
+    type: DirectoryOrCreate
