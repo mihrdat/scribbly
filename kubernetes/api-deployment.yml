@@ -37,9 +37,6 @@ spec:
               mountPath: /app/static
             - name: media-files
               mountPath: /app/media
-          securityContext:
-            runAsUser: 999
-            runAsGroup: 999
       volumes:
         - name: static-files
           persistentVolumeClaim:
