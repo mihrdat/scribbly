@@ -8,5 +8,3 @@ spec:
   resources:
     requests:
       storage: 100Mi
-  volumeName: postgres-pv
-  storageClassName: manual
