@@ -8,6 +8,9 @@ spec:
   resources:
     requests:
       storage: 100Mi
+  volumeName: static-pv
+  storageClassName: manual
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -19,3 +22,5 @@ spec:
   resources:
     requests:
       storage: 100Mi
+  volumeName: media-pv
+  storageClassName: manual
